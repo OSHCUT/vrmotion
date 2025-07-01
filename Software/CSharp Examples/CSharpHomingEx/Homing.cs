@@ -11,7 +11,7 @@ namespace CSharpHomingEx
     {
 
         const int CHANGE_NUMBER_SPACE = 2000;   //The change to the numberspace after homing (cnts)
-        const int TIME_TILL_TIMEOUT = 10000;    //The timeout used for homing(ms)
+        const int TIME_TILL_TIMEOUT = 60000;    //The timeout used for homing(ms)
 
         static void ExitProgram(int errCode)
         {
