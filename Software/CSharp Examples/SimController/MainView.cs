@@ -28,7 +28,7 @@ namespace SimController
 
         private void UpdateLabel(string message)
         {
-            motorComStatusLabel.Text = message;
+            telemetryRawPacketLabel.Text = message;
         }
 
         private void estopButton_Click(object sender, EventArgs e)
@@ -40,6 +40,11 @@ namespace SimController
         {
             _receiver.Stop();
             base.OnFormClosing(e);
+        }
+
+        private void MainView_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
