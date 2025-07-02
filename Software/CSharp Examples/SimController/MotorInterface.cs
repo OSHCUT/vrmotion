@@ -34,7 +34,8 @@ namespace SimController
         public bool YawMotorEnabled => yawMotorEnabled;
 
         private cliSysMgr myMgr;
-        private string comHubPort;
+        private string? comHubPort;
+        private cliIPort? myPort;
 
         public MotorInterface() {
             //Create the SysManager object. This object will coordinate actions among various ports
@@ -54,17 +55,15 @@ namespace SimController
             }
 
             comHubPort = comHubPorts[0];
-
             myMgr.ComPortHub(0, comHubPort, cliSysMgr._netRates.MN_BAUD_24X);
             myMgr.PortsOpen(1);
+            myPort = myMgr.Ports(0);
         }
 
         public void ZeroAllMotors()
         {
-            myMgr.PortsOpen(portCount);
-            for (int i = 0; i < portCount; i++)
+            if (hubConnected && myPort != null)
             {
-                cliIPort myPort = myMgr.Ports(i);
                 cliINode[] myNodes = new cliINode[myPort.NodeCount()];
                 Console.WriteLine("Port {0}: state={1}, nodes={2}", myPort.NetNumber(), myPort.OpenState(), myPort.NodeCount());
 
@@ -96,7 +95,7 @@ namespace SimController
                         if (myMgr.TimeStampMsec() > timeout)
                         {
                             Console.WriteLine("Error: Timed out waiting for Node {0} to enable.", n);
-                            
+
                         }
                     }
 
@@ -141,7 +140,6 @@ namespace SimController
                     // NOTE: All Teknic CLI classes implement the IDisposable pattern and should be properly disposed of when no longer in use.
                     myNodes[n].Dispose();
                 }
-                myPort.Dispose();
             }
         }
 
@@ -160,8 +158,8 @@ namespace SimController
                 myNodes[n] = myPort.Nodes(n);
                 myNodes[n].EnableReq(false);
             }
-
             myMgr?.PortsClose();
+            myPort?.Dispose();
             myMgr?.Dispose();
         }
     }
