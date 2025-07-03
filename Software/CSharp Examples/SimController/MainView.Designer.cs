@@ -123,7 +123,7 @@
             groupBox1.Controls.Add(label4);
             groupBox1.Controls.Add(label3);
             groupBox1.Controls.Add(label2);
-            groupBox1.Location = new Point(17, 228);
+            groupBox1.Location = new Point(17, 212);
             groupBox1.Name = "groupBox1";
             groupBox1.Size = new Size(721, 176);
             groupBox1.TabIndex = 5;
@@ -139,6 +139,7 @@
             telemetryZeroYawButton.TabIndex = 19;
             telemetryZeroYawButton.Text = "Zero Telemetry Yaw";
             telemetryZeroYawButton.UseVisualStyleBackColor = true;
+            telemetryZeroYawButton.Click += telemetryZeroYawButton_Click;
             // 
             // enableTelemetryLinkButton
             // 
@@ -341,6 +342,7 @@
             simYawZeroButton.TabIndex = 18;
             simYawZeroButton.Text = "Set Yaw Home";
             simYawZeroButton.UseVisualStyleBackColor = true;
+            simYawZeroButton.Click += simYawZeroButton_Click;
             // 
             // simRollLabel
             // 
@@ -420,7 +422,7 @@
             // 
             AutoScaleDimensions = new SizeF(9F, 21F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(758, 429);
+            ClientSize = new Size(758, 400);
             Controls.Add(groupBox2);
             Controls.Add(groupBox1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
