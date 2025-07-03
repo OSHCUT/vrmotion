@@ -32,6 +32,7 @@
             simEnableDisableButton = new Button();
             telemetryRawPacketLabel = new Label();
             groupBox1 = new GroupBox();
+            telemetryZeroYawButton = new Button();
             enableTelemetryLinkButton = new Button();
             telemetrySwayLabel = new Label();
             telemetrySurgeLabel = new Label();
@@ -41,7 +42,7 @@
             telemetryYawRateLabel = new Label();
             telemetryRollLabel = new Label();
             telemetryPitchLabel = new Label();
-            telemetryYaw = new Label();
+            telemetryYawLabel = new Label();
             label8 = new Label();
             label9 = new Label();
             label10 = new Label();
@@ -61,7 +62,6 @@
             label15 = new Label();
             simGoToZeroButton = new Button();
             simStartStopHomingButton = new Button();
-            telemetryZeroYawButton = new Button();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -113,7 +113,7 @@
             groupBox1.Controls.Add(telemetryYawRateLabel);
             groupBox1.Controls.Add(telemetryRollLabel);
             groupBox1.Controls.Add(telemetryPitchLabel);
-            groupBox1.Controls.Add(telemetryYaw);
+            groupBox1.Controls.Add(telemetryYawLabel);
             groupBox1.Controls.Add(label8);
             groupBox1.Controls.Add(label9);
             groupBox1.Controls.Add(label10);
@@ -130,6 +130,16 @@
             groupBox1.TabStop = false;
             groupBox1.Text = "Telemetry";
             // 
+            // telemetryZeroYawButton
+            // 
+            telemetryZeroYawButton.Location = new Point(428, 32);
+            telemetryZeroYawButton.Margin = new Padding(4);
+            telemetryZeroYawButton.Name = "telemetryZeroYawButton";
+            telemetryZeroYawButton.Size = new Size(161, 36);
+            telemetryZeroYawButton.TabIndex = 19;
+            telemetryZeroYawButton.Text = "Zero Telemetry Yaw";
+            telemetryZeroYawButton.UseVisualStyleBackColor = true;
+            // 
             // enableTelemetryLinkButton
             // 
             enableTelemetryLinkButton.Location = new Point(609, 29);
@@ -143,7 +153,7 @@
             // telemetrySwayLabel
             // 
             telemetrySwayLabel.AutoSize = true;
-            telemetrySwayLabel.Location = new Point(322, 100);
+            telemetrySwayLabel.Location = new Point(356, 100);
             telemetrySwayLabel.Name = "telemetrySwayLabel";
             telemetrySwayLabel.Size = new Size(19, 21);
             telemetrySwayLabel.TabIndex = 17;
@@ -152,7 +162,7 @@
             // telemetrySurgeLabel
             // 
             telemetrySurgeLabel.AutoSize = true;
-            telemetrySurgeLabel.Location = new Point(322, 70);
+            telemetrySurgeLabel.Location = new Point(356, 70);
             telemetrySurgeLabel.Name = "telemetrySurgeLabel";
             telemetrySurgeLabel.Size = new Size(19, 21);
             telemetrySurgeLabel.TabIndex = 16;
@@ -161,7 +171,7 @@
             // telemetryHeaveLabel
             // 
             telemetryHeaveLabel.AutoSize = true;
-            telemetryHeaveLabel.Location = new Point(321, 40);
+            telemetryHeaveLabel.Location = new Point(355, 40);
             telemetryHeaveLabel.Name = "telemetryHeaveLabel";
             telemetryHeaveLabel.Size = new Size(19, 21);
             telemetryHeaveLabel.TabIndex = 15;
@@ -170,7 +180,7 @@
             // telemetryRollRateLabel
             // 
             telemetryRollRateLabel.AutoSize = true;
-            telemetryRollRateLabel.Location = new Point(194, 100);
+            telemetryRollRateLabel.Location = new Point(211, 100);
             telemetryRollRateLabel.Name = "telemetryRollRateLabel";
             telemetryRollRateLabel.Size = new Size(19, 21);
             telemetryRollRateLabel.TabIndex = 14;
@@ -179,7 +189,7 @@
             // telemetryPitchRateLabel
             // 
             telemetryPitchRateLabel.AutoSize = true;
-            telemetryPitchRateLabel.Location = new Point(194, 70);
+            telemetryPitchRateLabel.Location = new Point(211, 70);
             telemetryPitchRateLabel.Name = "telemetryPitchRateLabel";
             telemetryPitchRateLabel.Size = new Size(19, 21);
             telemetryPitchRateLabel.TabIndex = 13;
@@ -188,7 +198,7 @@
             // telemetryYawRateLabel
             // 
             telemetryYawRateLabel.AutoSize = true;
-            telemetryYawRateLabel.Location = new Point(193, 40);
+            telemetryYawRateLabel.Location = new Point(210, 40);
             telemetryYawRateLabel.Name = "telemetryYawRateLabel";
             telemetryYawRateLabel.Size = new Size(19, 21);
             telemetryYawRateLabel.TabIndex = 12;
@@ -212,19 +222,19 @@
             telemetryPitchLabel.TabIndex = 10;
             telemetryPitchLabel.Text = "...";
             // 
-            // telemetryYaw
+            // telemetryYawLabel
             // 
-            telemetryYaw.AutoSize = true;
-            telemetryYaw.Location = new Point(56, 40);
-            telemetryYaw.Name = "telemetryYaw";
-            telemetryYaw.Size = new Size(19, 21);
-            telemetryYaw.TabIndex = 9;
-            telemetryYaw.Text = "...";
+            telemetryYawLabel.AutoSize = true;
+            telemetryYawLabel.Location = new Point(56, 40);
+            telemetryYawLabel.Name = "telemetryYawLabel";
+            telemetryYawLabel.Size = new Size(19, 21);
+            telemetryYawLabel.TabIndex = 9;
+            telemetryYawLabel.Text = "...";
             // 
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(256, 100);
+            label8.Location = new Point(290, 100);
             label8.Name = "label8";
             label8.Size = new Size(47, 21);
             label8.TabIndex = 8;
@@ -233,7 +243,7 @@
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(256, 70);
+            label9.Location = new Point(290, 70);
             label9.Name = "label9";
             label9.Size = new Size(51, 21);
             label9.TabIndex = 7;
@@ -242,7 +252,7 @@
             // label10
             // 
             label10.AutoSize = true;
-            label10.Location = new Point(255, 40);
+            label10.Location = new Point(289, 40);
             label10.Name = "label10";
             label10.Size = new Size(53, 21);
             label10.TabIndex = 6;
@@ -251,7 +261,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(109, 100);
+            label5.Location = new Point(126, 100);
             label5.Name = "label5";
             label5.Size = new Size(72, 21);
             label5.TabIndex = 5;
@@ -260,7 +270,7 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(109, 70);
+            label6.Location = new Point(126, 70);
             label6.Name = "label6";
             label6.Size = new Size(79, 21);
             label6.TabIndex = 4;
@@ -269,7 +279,7 @@
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(108, 40);
+            label7.Location = new Point(125, 40);
             label7.Name = "label7";
             label7.Size = new Size(73, 21);
             label7.TabIndex = 3;
@@ -324,7 +334,7 @@
             // 
             // simYawZeroButton
             // 
-            simYawZeroButton.Location = new Point(118, 78);
+            simYawZeroButton.Location = new Point(137, 78);
             simYawZeroButton.Margin = new Padding(4);
             simYawZeroButton.Name = "simYawZeroButton";
             simYawZeroButton.Size = new Size(118, 36);
@@ -388,7 +398,7 @@
             // 
             // simGoToZeroButton
             // 
-            simGoToZeroButton.Location = new Point(117, 29);
+            simGoToZeroButton.Location = new Point(136, 29);
             simGoToZeroButton.Margin = new Padding(4);
             simGoToZeroButton.Name = "simGoToZeroButton";
             simGoToZeroButton.Size = new Size(119, 36);
@@ -405,16 +415,6 @@
             simStartStopHomingButton.TabIndex = 2;
             simStartStopHomingButton.Text = "Start Homing";
             simStartStopHomingButton.UseVisualStyleBackColor = true;
-            // 
-            // telemetryZeroYawButton
-            // 
-            telemetryZeroYawButton.Location = new Point(393, 32);
-            telemetryZeroYawButton.Margin = new Padding(4);
-            telemetryZeroYawButton.Name = "telemetryZeroYawButton";
-            telemetryZeroYawButton.Size = new Size(161, 36);
-            telemetryZeroYawButton.TabIndex = 19;
-            telemetryZeroYawButton.Text = "Zero Telemetry Yaw";
-            telemetryZeroYawButton.UseVisualStyleBackColor = true;
             // 
             // MainView
             // 
@@ -452,7 +452,7 @@
         private Label telemetryYawRateLabel;
         private Label telemetryRollLabel;
         private Label telemetryPitchLabel;
-        private Label telemetryYaw;
+        private Label telemetryYawLabel;
         private Label label8;
         private Label label9;
         private Label label10;
