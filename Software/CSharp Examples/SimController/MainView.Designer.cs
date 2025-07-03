@@ -62,6 +62,7 @@
             label15 = new Label();
             simGoToZeroButton = new Button();
             simStartStopHomingButton = new Button();
+            simHubStatusLabel = new Label();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -71,7 +72,7 @@
             estopButton.BackColor = Color.Red;
             estopButton.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
             estopButton.ForeColor = Color.White;
-            estopButton.Location = new Point(516, 25);
+            estopButton.Location = new Point(518, 69);
             estopButton.Margin = new Padding(4);
             estopButton.Name = "estopButton";
             estopButton.Size = new Size(189, 158);
@@ -82,7 +83,7 @@
             // 
             // simEnableDisableButton
             // 
-            simEnableDisableButton.Location = new Point(7, 29);
+            simEnableDisableButton.Location = new Point(9, 73);
             simEnableDisableButton.Margin = new Padding(4);
             simEnableDisableButton.Name = "simEnableDisableButton";
             simEnableDisableButton.Size = new Size(95, 36);
@@ -123,7 +124,7 @@
             groupBox1.Controls.Add(label4);
             groupBox1.Controls.Add(label3);
             groupBox1.Controls.Add(label2);
-            groupBox1.Location = new Point(17, 212);
+            groupBox1.Location = new Point(17, 361);
             groupBox1.Name = "groupBox1";
             groupBox1.Size = new Size(721, 176);
             groupBox1.TabIndex = 5;
@@ -315,6 +316,7 @@
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(simHubStatusLabel);
             groupBox2.Controls.Add(simYawZeroButton);
             groupBox2.Controls.Add(estopButton);
             groupBox2.Controls.Add(simRollLabel);
@@ -328,14 +330,14 @@
             groupBox2.Controls.Add(simEnableDisableButton);
             groupBox2.Location = new Point(17, 16);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(721, 190);
+            groupBox2.Size = new Size(721, 249);
             groupBox2.TabIndex = 6;
             groupBox2.TabStop = false;
             groupBox2.Text = "Simulator";
             // 
             // simYawZeroButton
             // 
-            simYawZeroButton.Location = new Point(137, 78);
+            simYawZeroButton.Location = new Point(139, 122);
             simYawZeroButton.Margin = new Padding(4);
             simYawZeroButton.Name = "simYawZeroButton";
             simYawZeroButton.Size = new Size(118, 36);
@@ -347,7 +349,7 @@
             // simRollLabel
             // 
             simRollLabel.AutoSize = true;
-            simRollLabel.Location = new Point(58, 146);
+            simRollLabel.Location = new Point(60, 190);
             simRollLabel.Name = "simRollLabel";
             simRollLabel.Size = new Size(19, 21);
             simRollLabel.TabIndex = 17;
@@ -356,7 +358,7 @@
             // simPitchLabel
             // 
             simPitchLabel.AutoSize = true;
-            simPitchLabel.Location = new Point(58, 116);
+            simPitchLabel.Location = new Point(60, 160);
             simPitchLabel.Name = "simPitchLabel";
             simPitchLabel.Size = new Size(19, 21);
             simPitchLabel.TabIndex = 16;
@@ -365,7 +367,7 @@
             // simYawLabel
             // 
             simYawLabel.AutoSize = true;
-            simYawLabel.Location = new Point(57, 86);
+            simYawLabel.Location = new Point(59, 130);
             simYawLabel.Name = "simYawLabel";
             simYawLabel.Size = new Size(19, 21);
             simYawLabel.TabIndex = 15;
@@ -374,7 +376,7 @@
             // label13
             // 
             label13.AutoSize = true;
-            label13.Location = new Point(8, 146);
+            label13.Location = new Point(10, 190);
             label13.Name = "label13";
             label13.Size = new Size(37, 21);
             label13.TabIndex = 14;
@@ -383,7 +385,7 @@
             // label14
             // 
             label14.AutoSize = true;
-            label14.Location = new Point(8, 116);
+            label14.Location = new Point(10, 160);
             label14.Name = "label14";
             label14.Size = new Size(44, 21);
             label14.TabIndex = 13;
@@ -392,7 +394,7 @@
             // label15
             // 
             label15.AutoSize = true;
-            label15.Location = new Point(7, 86);
+            label15.Location = new Point(9, 130);
             label15.Name = "label15";
             label15.Size = new Size(38, 21);
             label15.TabIndex = 12;
@@ -400,7 +402,7 @@
             // 
             // simGoToZeroButton
             // 
-            simGoToZeroButton.Location = new Point(136, 29);
+            simGoToZeroButton.Location = new Point(138, 73);
             simGoToZeroButton.Margin = new Padding(4);
             simGoToZeroButton.Name = "simGoToZeroButton";
             simGoToZeroButton.Size = new Size(119, 36);
@@ -410,7 +412,7 @@
             // 
             // simStartStopHomingButton
             // 
-            simStartStopHomingButton.Location = new Point(334, 29);
+            simStartStopHomingButton.Location = new Point(336, 73);
             simStartStopHomingButton.Margin = new Padding(4);
             simStartStopHomingButton.Name = "simStartStopHomingButton";
             simStartStopHomingButton.Size = new Size(144, 36);
@@ -418,11 +420,20 @@
             simStartStopHomingButton.Text = "Start Homing";
             simStartStopHomingButton.UseVisualStyleBackColor = true;
             // 
+            // simHubStatusLabel
+            // 
+            simHubStatusLabel.AutoSize = true;
+            simHubStatusLabel.Location = new Point(10, 35);
+            simHubStatusLabel.Name = "simHubStatusLabel";
+            simHubStatusLabel.Size = new Size(185, 21);
+            simHubStatusLabel.TabIndex = 19;
+            simHubStatusLabel.Text = "Status: NOT CONNECTED";
+            // 
             // MainView
             // 
             AutoScaleDimensions = new SizeF(9F, 21F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(758, 400);
+            ClientSize = new Size(947, 563);
             Controls.Add(groupBox2);
             Controls.Add(groupBox1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -473,5 +484,6 @@
         private Label label15;
         private Button simYawZeroButton;
         private Button telemetryZeroYawButton;
+        private Label simHubStatusLabel;
     }
 }

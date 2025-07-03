@@ -5,7 +5,7 @@ namespace SimController
     public partial class MainView : Form
     {
         private readonly UdpReceiver _receiver;
-        private MotorInterface? motorInterface;
+        private MotorInterface? _motorInterface;
 
         private double yaw, pitch, roll;
         private double yawRate, pitchRate, rollRate;
@@ -55,6 +55,15 @@ namespace SimController
             _receiver = new UdpReceiver(5123);
             _receiver.MessageReceived += OnUdpMessageReceived;
             _receiver.Start();
+
+            _motorInterface = new MotorInterface();
+            _motorInterface.StatusChanged += OnSimStatusChanged;
+            _motorInterface.Start();
+        }
+
+        private void OnSimStatusChanged(string message)
+        {
+            simHubStatusLabel.Text = "Status: " + message;
         }
 
         private void OnUdpMessageReceived(string message)
@@ -158,6 +167,7 @@ namespace SimController
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             _receiver.Stop();
+            _motorInterface?.Dispose();
             base.OnFormClosing(e);
         }
 

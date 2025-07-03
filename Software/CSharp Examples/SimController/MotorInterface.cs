@@ -1,9 +1,10 @@
-﻿using System;
+﻿using sFndCLIWrapper;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using sFndCLIWrapper;
+using System.Windows.Forms;
 
 namespace SimController
 {
@@ -13,10 +14,7 @@ namespace SimController
 
         private string lastStatus = "";
         public string LastStatus => lastStatus;
-
-        private bool hubConnected = false;
-        public bool HubConnected => hubConnected;
-        
+       
         private bool pitchHomed = false;
         public bool PitchHomed => pitchHomed;
 
@@ -36,33 +34,55 @@ namespace SimController
         private cliSysMgr myMgr;
         private string? comHubPort;
         private cliIPort? myPort;
+        private Boolean hubPortInitialized = false;
+
+        public event Action<string>? StatusChanged;
+        public readonly IProgress<string> StatusReporter;
+
 
         public MotorInterface() {
             //Create the SysManager object. This object will coordinate actions among various ports
             // and within nodes. In this example we use this object to setup and open our port.
             myMgr = new cliSysMgr();
+            StatusReporter = new Progress<string>(msg => StatusChanged?.Invoke(msg));
+        }
+
+        public void Start()
+        {
             List<String> comHubPorts = new List<String>();
 
-            //This will try to open the port. If there is an error/exception during the port opening,
-            //the code will jump to the catch loop where detailed information regarding the error will be displayed;
-            //otherwise the catch loop is skipped over
-            myMgr.FindComHubPorts(comHubPorts);
-
-            if (comHubPorts.Count != 1)
+            Task.Run(() =>
             {
-                lastStatus = "Error: Expected 1 ComHub port, found " + comHubPorts.Count + ".";
-                return;
-            }
+                try
+                {
+                    StatusReporter.Report("Connecting to motion simulator.");
+                    myMgr.FindComHubPorts(comHubPorts);
 
-            comHubPort = comHubPorts[0];
-            myMgr.ComPortHub(0, comHubPort, cliSysMgr._netRates.MN_BAUD_24X);
-            myMgr.PortsOpen(1);
-            myPort = myMgr.Ports(0);
+                    if (comHubPorts.Count != 1)
+                    {
+                        StatusReporter.Report("Error, expected 1 ComHub port, found " + comHubPorts.Count + ".");
+                        return;
+                    }
+
+                    comHubPort = comHubPorts[0];
+                    myMgr.ComPortHub(0, comHubPort, cliSysMgr._netRates.MN_BAUD_24X);
+                    myMgr.PortsOpen(1);
+                    myPort = myMgr.Ports(0);
+
+                    hubPortInitialized = true;
+                    StatusReporter.Report("Connected.");
+                }
+                catch (Exception e)
+                {
+                    StatusReporter.Report("Failed to open simulator COM port. " + e.Message);
+                    return;
+                }
+            });
         }
 
         public void ZeroAllMotors()
         {
-            if (hubConnected && myPort != null)
+            if (hubPortInitialized && myPort != null)
             {
                 cliINode[] myNodes = new cliINode[myPort.NodeCount()];
                 Console.WriteLine("Port {0}: state={1}, nodes={2}", myPort.NetNumber(), myPort.OpenState(), myPort.NodeCount());

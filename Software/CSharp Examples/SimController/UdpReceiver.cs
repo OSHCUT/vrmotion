@@ -34,7 +34,7 @@ namespace SimController
                         var result = await _udpClient.ReceiveAsync();
                         string message = Encoding.UTF8.GetString(result.Buffer);
 
-                        MessageReceived?.Invoke(message); // Raise event
+                        MessageReceived?.Invoke(message);
                     }
                 }
                 catch (ObjectDisposedException) { }
