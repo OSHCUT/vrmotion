@@ -32,15 +32,7 @@
             simEnableDisableButton = new Button();
             telemetryRawPacketLabel = new Label();
             groupBox1 = new GroupBox();
-            label4 = new Label();
-            label3 = new Label();
-            label2 = new Label();
-            label5 = new Label();
-            label6 = new Label();
-            label7 = new Label();
-            label8 = new Label();
-            label9 = new Label();
-            label10 = new Label();
+            enableTelemetryLinkButton = new Button();
             telemetrySwayLabel = new Label();
             telemetrySurgeLabel = new Label();
             telemetryHeaveLabel = new Label();
@@ -50,17 +42,26 @@
             telemetryRollLabel = new Label();
             telemetryPitchLabel = new Label();
             telemetryYaw = new Label();
-            enableTelemetryLinkButton = new Button();
+            label8 = new Label();
+            label9 = new Label();
+            label10 = new Label();
+            label5 = new Label();
+            label6 = new Label();
+            label7 = new Label();
+            label4 = new Label();
+            label3 = new Label();
+            label2 = new Label();
             groupBox2 = new GroupBox();
-            simStartStopHomingButton = new Button();
-            simGoToZeroButton = new Button();
+            simYawZeroButton = new Button();
             simRollLabel = new Label();
             simPitchLabel = new Label();
             simYawLabel = new Label();
             label13 = new Label();
             label14 = new Label();
             label15 = new Label();
-            simYawZeroButton = new Button();
+            simGoToZeroButton = new Button();
+            simStartStopHomingButton = new Button();
+            telemetryZeroYawButton = new Button();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -68,8 +69,9 @@
             // estopButton
             // 
             estopButton.BackColor = Color.Red;
+            estopButton.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
             estopButton.ForeColor = Color.White;
-            estopButton.Location = new Point(549, 33);
+            estopButton.Location = new Point(516, 25);
             estopButton.Margin = new Padding(4);
             estopButton.Name = "estopButton";
             estopButton.Size = new Size(189, 158);
@@ -100,6 +102,7 @@
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(telemetryZeroYawButton);
             groupBox1.Controls.Add(enableTelemetryLinkButton);
             groupBox1.Controls.Add(telemetrySwayLabel);
             groupBox1.Controls.Add(telemetryRawPacketLabel);
@@ -122,91 +125,20 @@
             groupBox1.Controls.Add(label2);
             groupBox1.Location = new Point(17, 228);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(513, 176);
+            groupBox1.Size = new Size(721, 176);
             groupBox1.TabIndex = 5;
             groupBox1.TabStop = false;
             groupBox1.Text = "Telemetry";
             // 
-            // label4
+            // enableTelemetryLinkButton
             // 
-            label4.AutoSize = true;
-            label4.Location = new Point(7, 100);
-            label4.Name = "label4";
-            label4.Size = new Size(37, 21);
-            label4.TabIndex = 2;
-            label4.Text = "Roll";
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new Point(7, 70);
-            label3.Name = "label3";
-            label3.Size = new Size(44, 21);
-            label3.TabIndex = 1;
-            label3.Text = "Pitch";
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(6, 40);
-            label2.Name = "label2";
-            label2.Size = new Size(38, 21);
-            label2.TabIndex = 0;
-            label2.Text = "Yaw";
-            // 
-            // label5
-            // 
-            label5.AutoSize = true;
-            label5.Location = new Point(109, 100);
-            label5.Name = "label5";
-            label5.Size = new Size(72, 21);
-            label5.TabIndex = 5;
-            label5.Text = "Roll Rate";
-            // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Location = new Point(109, 70);
-            label6.Name = "label6";
-            label6.Size = new Size(79, 21);
-            label6.TabIndex = 4;
-            label6.Text = "Pitch Rate";
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Location = new Point(108, 40);
-            label7.Name = "label7";
-            label7.Size = new Size(73, 21);
-            label7.TabIndex = 3;
-            label7.Text = "Yaw Rate";
-            // 
-            // label8
-            // 
-            label8.AutoSize = true;
-            label8.Location = new Point(256, 100);
-            label8.Name = "label8";
-            label8.Size = new Size(47, 21);
-            label8.TabIndex = 8;
-            label8.Text = "Sway";
-            // 
-            // label9
-            // 
-            label9.AutoSize = true;
-            label9.Location = new Point(256, 70);
-            label9.Name = "label9";
-            label9.Size = new Size(51, 21);
-            label9.TabIndex = 7;
-            label9.Text = "Surge";
-            // 
-            // label10
-            // 
-            label10.AutoSize = true;
-            label10.Location = new Point(255, 40);
-            label10.Name = "label10";
-            label10.Size = new Size(53, 21);
-            label10.TabIndex = 6;
-            label10.Text = "Heave";
+            enableTelemetryLinkButton.Location = new Point(609, 29);
+            enableTelemetryLinkButton.Margin = new Padding(4);
+            enableTelemetryLinkButton.Name = "enableTelemetryLinkButton";
+            enableTelemetryLinkButton.Size = new Size(96, 87);
+            enableTelemetryLinkButton.TabIndex = 6;
+            enableTelemetryLinkButton.Text = "Enable Motion";
+            enableTelemetryLinkButton.UseVisualStyleBackColor = true;
             // 
             // telemetrySwayLabel
             // 
@@ -289,19 +221,91 @@
             telemetryYaw.TabIndex = 9;
             telemetryYaw.Text = "...";
             // 
-            // enableTelemetryLinkButton
+            // label8
             // 
-            enableTelemetryLinkButton.Location = new Point(392, 37);
-            enableTelemetryLinkButton.Margin = new Padding(4);
-            enableTelemetryLinkButton.Name = "enableTelemetryLinkButton";
-            enableTelemetryLinkButton.Size = new Size(96, 87);
-            enableTelemetryLinkButton.TabIndex = 6;
-            enableTelemetryLinkButton.Text = "Enable Motion";
-            enableTelemetryLinkButton.UseVisualStyleBackColor = true;
+            label8.AutoSize = true;
+            label8.Location = new Point(256, 100);
+            label8.Name = "label8";
+            label8.Size = new Size(47, 21);
+            label8.TabIndex = 8;
+            label8.Text = "Sway";
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(256, 70);
+            label9.Name = "label9";
+            label9.Size = new Size(51, 21);
+            label9.TabIndex = 7;
+            label9.Text = "Surge";
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(255, 40);
+            label10.Name = "label10";
+            label10.Size = new Size(53, 21);
+            label10.TabIndex = 6;
+            label10.Text = "Heave";
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(109, 100);
+            label5.Name = "label5";
+            label5.Size = new Size(72, 21);
+            label5.TabIndex = 5;
+            label5.Text = "Roll Rate";
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(109, 70);
+            label6.Name = "label6";
+            label6.Size = new Size(79, 21);
+            label6.TabIndex = 4;
+            label6.Text = "Pitch Rate";
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(108, 40);
+            label7.Name = "label7";
+            label7.Size = new Size(73, 21);
+            label7.TabIndex = 3;
+            label7.Text = "Yaw Rate";
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(7, 100);
+            label4.Name = "label4";
+            label4.Size = new Size(37, 21);
+            label4.TabIndex = 2;
+            label4.Text = "Roll";
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(7, 70);
+            label3.Name = "label3";
+            label3.Size = new Size(44, 21);
+            label3.TabIndex = 1;
+            label3.Text = "Pitch";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(6, 40);
+            label2.Name = "label2";
+            label2.Size = new Size(38, 21);
+            label2.TabIndex = 0;
+            label2.Text = "Yaw";
             // 
             // groupBox2
             // 
             groupBox2.Controls.Add(simYawZeroButton);
+            groupBox2.Controls.Add(estopButton);
             groupBox2.Controls.Add(simRollLabel);
             groupBox2.Controls.Add(simPitchLabel);
             groupBox2.Controls.Add(simYawLabel);
@@ -313,30 +317,20 @@
             groupBox2.Controls.Add(simEnableDisableButton);
             groupBox2.Location = new Point(17, 16);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(513, 190);
+            groupBox2.Size = new Size(721, 190);
             groupBox2.TabIndex = 6;
             groupBox2.TabStop = false;
             groupBox2.Text = "Simulator";
             // 
-            // simStartStopHomingButton
+            // simYawZeroButton
             // 
-            simStartStopHomingButton.Location = new Point(344, 29);
-            simStartStopHomingButton.Margin = new Padding(4);
-            simStartStopHomingButton.Name = "simStartStopHomingButton";
-            simStartStopHomingButton.Size = new Size(144, 36);
-            simStartStopHomingButton.TabIndex = 2;
-            simStartStopHomingButton.Text = "Start Homing";
-            simStartStopHomingButton.UseVisualStyleBackColor = true;
-            // 
-            // simGoToZeroButton
-            // 
-            simGoToZeroButton.Location = new Point(117, 29);
-            simGoToZeroButton.Margin = new Padding(4);
-            simGoToZeroButton.Name = "simGoToZeroButton";
-            simGoToZeroButton.Size = new Size(95, 36);
-            simGoToZeroButton.TabIndex = 3;
-            simGoToZeroButton.Text = "Go To Zero";
-            simGoToZeroButton.UseVisualStyleBackColor = true;
+            simYawZeroButton.Location = new Point(118, 78);
+            simYawZeroButton.Margin = new Padding(4);
+            simYawZeroButton.Name = "simYawZeroButton";
+            simYawZeroButton.Size = new Size(118, 36);
+            simYawZeroButton.TabIndex = 18;
+            simYawZeroButton.Text = "Set Yaw Home";
+            simYawZeroButton.UseVisualStyleBackColor = true;
             // 
             // simRollLabel
             // 
@@ -392,15 +386,35 @@
             label15.TabIndex = 12;
             label15.Text = "Yaw";
             // 
-            // simYawZeroButton
+            // simGoToZeroButton
             // 
-            simYawZeroButton.Location = new Point(118, 78);
-            simYawZeroButton.Margin = new Padding(4);
-            simYawZeroButton.Name = "simYawZeroButton";
-            simYawZeroButton.Size = new Size(95, 36);
-            simYawZeroButton.TabIndex = 18;
-            simYawZeroButton.Text = "Go To Zero";
-            simYawZeroButton.UseVisualStyleBackColor = true;
+            simGoToZeroButton.Location = new Point(117, 29);
+            simGoToZeroButton.Margin = new Padding(4);
+            simGoToZeroButton.Name = "simGoToZeroButton";
+            simGoToZeroButton.Size = new Size(119, 36);
+            simGoToZeroButton.TabIndex = 3;
+            simGoToZeroButton.Text = "Go To Zero";
+            simGoToZeroButton.UseVisualStyleBackColor = true;
+            // 
+            // simStartStopHomingButton
+            // 
+            simStartStopHomingButton.Location = new Point(334, 29);
+            simStartStopHomingButton.Margin = new Padding(4);
+            simStartStopHomingButton.Name = "simStartStopHomingButton";
+            simStartStopHomingButton.Size = new Size(144, 36);
+            simStartStopHomingButton.TabIndex = 2;
+            simStartStopHomingButton.Text = "Start Homing";
+            simStartStopHomingButton.UseVisualStyleBackColor = true;
+            // 
+            // telemetryZeroYawButton
+            // 
+            telemetryZeroYawButton.Location = new Point(393, 32);
+            telemetryZeroYawButton.Margin = new Padding(4);
+            telemetryZeroYawButton.Name = "telemetryZeroYawButton";
+            telemetryZeroYawButton.Size = new Size(161, 36);
+            telemetryZeroYawButton.TabIndex = 19;
+            telemetryZeroYawButton.Text = "Zero Telemetry Yaw";
+            telemetryZeroYawButton.UseVisualStyleBackColor = true;
             // 
             // MainView
             // 
@@ -408,7 +422,6 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(758, 429);
             Controls.Add(groupBox2);
-            Controls.Add(estopButton);
             Controls.Add(groupBox1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(4);
@@ -457,5 +470,6 @@
         private Label label14;
         private Label label15;
         private Button simYawZeroButton;
+        private Button telemetryZeroYawButton;
     }
 }
