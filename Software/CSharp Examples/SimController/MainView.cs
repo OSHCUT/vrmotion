@@ -29,24 +29,17 @@ namespace SimController
 
         private long yawZeroCounts = 0;
         private Boolean yawRateMode = true;    // If true, yaw is moved by telemetry rate, not position.
-        private double yawRateScale = 1.0;  // Affects how accurately yaw rate matches telemetry data. Should range from 0.1 to 1.0.
+        private double yawRateScale = 0.1;  // Affects how accurately yaw rate matches telemetry data. Should range from 0.1 to 1.0.
         private double rollPositionScale = 1.0; // Scale for roll position, affects how exactly roll matches telemetry data. Should range from 0.1 to 1.0. Numbers < 1.0 increase simulation "dynamic range"
         private double pitchPositionScale = 1.0; // Scale for pitch position, affects how exactly pitch matches telemetry data. Should range from 0.1 to 1.0.
 
-        private double commandedYawCounts = 0;
+        private int commandedYawCounts = 0;
         private double commandedYawRateCountsPerSecond = 0;
-        private double commandedRollCounts = 0;
-        private double commandedPitchCounts = 0;
-
-        private long simYawPositionCounts = 0;
-        private long simRollPositionCounts = 0;
-        private long simPitchPositionCounts = 0;
-
-        private double simYaw = 0;
-        private double simRoll = 0;
-        private double simPitch = 0;
+        private int commandedRollCounts = 0;
+        private int commandedPitchCounts = 0;
 
         private Boolean telemetryMotionEnabled = false; // If true, telemetry data is used to control motors.
+        private SimulatorState? simulatorState;
 
         public MainView()
         {
@@ -58,12 +51,65 @@ namespace SimController
 
             _motorInterface = new MotorInterface();
             _motorInterface.StatusChanged += OnSimStatusChanged;
+            _motorInterface.StateChanged += OnSimStateChanged;
             _motorInterface.Start();
         }
 
         private void OnSimStatusChanged(string message)
         {
             simHubStatusLabel.Text = "Status: " + message;
+        }
+
+        // This exposes a private member variables and I'm not sure if the compiler cares.
+        private void OnSimStateChanged(SimulatorState simState)
+        {
+            simulatorState = simState;
+            if (simulatorState.portConnected)
+            {
+                simEnableDisableButton.Enabled = true;
+            }
+            else
+            {
+                simEnableDisableButton.Enabled = false;
+            }
+
+            if (simulatorState.motorsEnabled)
+            {
+                simEnableDisableButton.Text = "Disable";
+
+                if (simulatorState.homingInProgress || simulatorState.movingToZero)
+                {
+                    simStartStopHomingButton.Enabled = false;
+                    simGoToZeroButton.Enabled = false;
+                    enableTelemetryLinkButton.Enabled = true;
+                }
+                else
+                {
+                    simStartStopHomingButton.Enabled = true;
+
+                    if (simulatorState.motorsHomed)
+                    {
+                        simGoToZeroButton.Enabled = true;
+                        enableTelemetryLinkButton.Enabled = true;
+                    }
+                    enableTelemetryLinkButton.Enabled = true;
+                }
+            }
+            else
+            {
+                simEnableDisableButton.Text = "Enable";
+
+                simGoToZeroButton.Enabled = false;
+                simStartStopHomingButton.Enabled = false;
+                simYawZeroButton.Enabled = false;
+                enableTelemetryLinkButton.Enabled = false;
+            }
+
+            // Update motor state values
+            simYawLabel.Text = simulatorState.yawRate.ToString();
+            simPitchLabel.Text = simulatorState.pitchCounts.ToString();
+            simRollLabel.Text = simulatorState.rollCounts.ToString();
+
         }
 
         private void OnUdpMessageReceived(string message)
@@ -128,33 +174,43 @@ namespace SimController
             telemetryRollRateLabel.Text = $"{rollRate:F2}°/s";
             telemetryPitchRateLabel.Text = $"{pitchRate:F2}°/s";
 
+            if (yawRate >= 0)
+            {
+                commandedYawRateCountsPerSecond = Math.Min(yawRate * yawDegreesToCounts * yawRateScale, yawMaxCommandedCountsPerSecond);
+            }
+            else
+            {
+                commandedYawRateCountsPerSecond = Math.Max(yawRate * yawDegreesToCounts * yawRateScale, -yawMaxCommandedCountsPerSecond);
+            }
+            commandedYawCounts = (int)(yaw * yawDegreesToCounts - yawZeroCounts);  // TODO: Deal with rollover at 180 degrees
+
+            if (roll >= 0)
+            {
+                commandedRollCounts = (int)Math.Min(roll * rollDegreesToCounts * rollPositionScale, rollMaxCommandedCounts);
+            }
+            else
+            {
+                commandedRollCounts = (int)Math.Max(roll * rollDegreesToCounts * rollPositionScale, -rollMaxCommandedCounts);
+            }
+
+            if (pitch >= 0)
+            {
+                commandedPitchCounts = (int)Math.Min(pitch * pitchDegreesToCounts * pitchPositionScale, pitchMaxCommandedCounts);
+            }
+            else
+            {
+                commandedPitchCounts = (int)Math.Max(pitch * pitchDegreesToCounts * pitchPositionScale, -pitchMaxCommandedCounts);
+            }
+
+            pitchCmdLabel.Text = commandedPitchCounts.ToString();
+            rollCmdLabel.Text = commandedRollCounts.ToString();
+            yawRateCmdLabel.Text = (commandedYawRateCountsPerSecond / 32000 * 60).ToString();
+
             if (telemetryMotionEnabled)
             {
-                if (yawRate >= 0)
+                if (_motorInterface != null)
                 {
-                    commandedYawRateCountsPerSecond = Math.Min(yawRate * yawDegreesToCounts * yawRateScale, yawMaxCommandedCountsPerSecond);
-                } else
-                {
-                    commandedYawRateCountsPerSecond = Math.Max(yawRate * yawDegreesToCounts * yawRateScale, -yawMaxCommandedCountsPerSecond);
-                }
-                commandedYawCounts = yaw * yawDegreesToCounts - yawZeroCounts;  // TODO: Deal with rollover at 180 degrees
-
-                if (roll >= 0)
-                {
-                    commandedRollCounts = Math.Min(roll * rollDegreesToCounts * rollPositionScale, rollMaxCommandedCounts);
-                }
-                else
-                {
-                    commandedRollCounts = Math.Max(roll * rollDegreesToCounts * rollPositionScale, -rollMaxCommandedCounts);
-                }
-
-                if (pitch >= 0)
-                {
-                    commandedPitchCounts = Math.Min(pitch * pitchDegreesToCounts * pitchPositionScale, pitchMaxCommandedCounts);
-                }
-                else
-                {
-                    commandedPitchCounts = Math.Max(pitch * pitchDegreesToCounts * pitchPositionScale, -pitchMaxCommandedCounts);
+                    _motorInterface.startUnmonitoredMove(commandedYawRateCountsPerSecond, commandedPitchCounts, commandedRollCounts);
                 }
             }
         }
@@ -162,7 +218,7 @@ namespace SimController
         private void estopButton_Click(object sender, EventArgs e)
         {
             // TODO: Stop all motion, disable all motors!
-
+            _motorInterface?.DisableMotors();
         }
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
@@ -183,7 +239,49 @@ namespace SimController
 
         private void simYawZeroButton_Click(object sender, EventArgs e)
         {
-            
+
+        }
+
+        private void simEnableDisableButton_Click(object sender, EventArgs e)
+        {
+            if (simulatorState == null || simulatorState.motorsEnabled == false)
+            {
+                _motorInterface?.EnableMotors();
+            }
+            else
+            {
+                _motorInterface?.DisableMotors();
+            }
+        }
+
+        private void simGoToZeroButton_Click(object sender, EventArgs e)
+        {
+            _motorInterface?.GotoZero();
+        }
+
+        private void simStartStopHomingButton_Click(object sender, EventArgs e)
+        {
+            _motorInterface?.ZeroAllMotors();
+        }
+
+        private void enableTelemetryLinkButton_Click(object sender, EventArgs e)
+        {
+            if (telemetryMotionEnabled)
+            {
+                telemetryMotionEnabled = false;
+                enableTelemetryLinkButton.Text = "Enable Motion";
+            }
+            else
+            {
+                telemetryMotionEnabled = true;
+                enableTelemetryLinkButton.Text = "Disable Motion";
+            }
+        }
+
+        private void testMoveButton_Click(object sender, EventArgs e)
+        {
+           _motorInterface?.startUnmonitoredMove(0, (int)(15 * pitchDegreesToCounts), (int)(15 * rollDegreesToCounts));
+           // _motorInterface?.startUnmonitoredMove(0, (int)500, (int)500);
         }
     }
 }

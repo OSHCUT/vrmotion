@@ -53,6 +53,11 @@
             label3 = new Label();
             label2 = new Label();
             groupBox2 = new GroupBox();
+            rollCmdLabel = new Label();
+            pitchCmdLabel = new Label();
+            yawRateCmdLabel = new Label();
+            label1 = new Label();
+            simHubStatusLabel = new Label();
             simYawZeroButton = new Button();
             simRollLabel = new Label();
             simPitchLabel = new Label();
@@ -62,7 +67,7 @@
             label15 = new Label();
             simGoToZeroButton = new Button();
             simStartStopHomingButton = new Button();
-            simHubStatusLabel = new Label();
+            testMoveButton = new Button();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -72,7 +77,7 @@
             estopButton.BackColor = Color.Red;
             estopButton.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
             estopButton.ForeColor = Color.White;
-            estopButton.Location = new Point(518, 69);
+            estopButton.Location = new Point(696, 73);
             estopButton.Margin = new Padding(4);
             estopButton.Name = "estopButton";
             estopButton.Size = new Size(189, 158);
@@ -83,6 +88,7 @@
             // 
             // simEnableDisableButton
             // 
+            simEnableDisableButton.Enabled = false;
             simEnableDisableButton.Location = new Point(9, 73);
             simEnableDisableButton.Margin = new Padding(4);
             simEnableDisableButton.Name = "simEnableDisableButton";
@@ -90,6 +96,7 @@
             simEnableDisableButton.TabIndex = 1;
             simEnableDisableButton.Text = "Enable";
             simEnableDisableButton.UseVisualStyleBackColor = true;
+            simEnableDisableButton.Click += simEnableDisableButton_Click;
             // 
             // telemetryRawPacketLabel
             // 
@@ -144,6 +151,7 @@
             // 
             // enableTelemetryLinkButton
             // 
+            enableTelemetryLinkButton.Enabled = false;
             enableTelemetryLinkButton.Location = new Point(609, 29);
             enableTelemetryLinkButton.Margin = new Padding(4);
             enableTelemetryLinkButton.Name = "enableTelemetryLinkButton";
@@ -151,6 +159,7 @@
             enableTelemetryLinkButton.TabIndex = 6;
             enableTelemetryLinkButton.Text = "Enable Motion";
             enableTelemetryLinkButton.UseVisualStyleBackColor = true;
+            enableTelemetryLinkButton.Click += enableTelemetryLinkButton_Click;
             // 
             // telemetrySwayLabel
             // 
@@ -316,6 +325,11 @@
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(testMoveButton);
+            groupBox2.Controls.Add(rollCmdLabel);
+            groupBox2.Controls.Add(pitchCmdLabel);
+            groupBox2.Controls.Add(yawRateCmdLabel);
+            groupBox2.Controls.Add(label1);
             groupBox2.Controls.Add(simHubStatusLabel);
             groupBox2.Controls.Add(simYawZeroButton);
             groupBox2.Controls.Add(estopButton);
@@ -330,14 +344,60 @@
             groupBox2.Controls.Add(simEnableDisableButton);
             groupBox2.Location = new Point(17, 16);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(721, 249);
+            groupBox2.Size = new Size(904, 249);
             groupBox2.TabIndex = 6;
             groupBox2.TabStop = false;
             groupBox2.Text = "Simulator";
             // 
+            // rollCmdLabel
+            // 
+            rollCmdLabel.AutoSize = true;
+            rollCmdLabel.Location = new Point(145, 207);
+            rollCmdLabel.Name = "rollCmdLabel";
+            rollCmdLabel.Size = new Size(19, 21);
+            rollCmdLabel.TabIndex = 23;
+            rollCmdLabel.Text = "...";
+            // 
+            // pitchCmdLabel
+            // 
+            pitchCmdLabel.AutoSize = true;
+            pitchCmdLabel.Location = new Point(145, 177);
+            pitchCmdLabel.Name = "pitchCmdLabel";
+            pitchCmdLabel.Size = new Size(19, 21);
+            pitchCmdLabel.TabIndex = 22;
+            pitchCmdLabel.Text = "...";
+            // 
+            // yawRateCmdLabel
+            // 
+            yawRateCmdLabel.AutoSize = true;
+            yawRateCmdLabel.Location = new Point(145, 147);
+            yawRateCmdLabel.Name = "yawRateCmdLabel";
+            yawRateCmdLabel.Size = new Size(19, 21);
+            yawRateCmdLabel.TabIndex = 21;
+            yawRateCmdLabel.Text = "...";
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(145, 129);
+            label1.Name = "label1";
+            label1.Size = new Size(45, 21);
+            label1.TabIndex = 20;
+            label1.Text = "CMD";
+            // 
+            // simHubStatusLabel
+            // 
+            simHubStatusLabel.AutoSize = true;
+            simHubStatusLabel.Location = new Point(10, 35);
+            simHubStatusLabel.Name = "simHubStatusLabel";
+            simHubStatusLabel.Size = new Size(185, 21);
+            simHubStatusLabel.TabIndex = 19;
+            simHubStatusLabel.Text = "Status: NOT CONNECTED";
+            // 
             // simYawZeroButton
             // 
-            simYawZeroButton.Location = new Point(139, 122);
+            simYawZeroButton.Enabled = false;
+            simYawZeroButton.Location = new Point(291, 122);
             simYawZeroButton.Margin = new Padding(4);
             simYawZeroButton.Name = "simYawZeroButton";
             simYawZeroButton.Size = new Size(118, 36);
@@ -349,7 +409,7 @@
             // simRollLabel
             // 
             simRollLabel.AutoSize = true;
-            simRollLabel.Location = new Point(60, 190);
+            simRollLabel.Location = new Point(60, 207);
             simRollLabel.Name = "simRollLabel";
             simRollLabel.Size = new Size(19, 21);
             simRollLabel.TabIndex = 17;
@@ -358,7 +418,7 @@
             // simPitchLabel
             // 
             simPitchLabel.AutoSize = true;
-            simPitchLabel.Location = new Point(60, 160);
+            simPitchLabel.Location = new Point(60, 177);
             simPitchLabel.Name = "simPitchLabel";
             simPitchLabel.Size = new Size(19, 21);
             simPitchLabel.TabIndex = 16;
@@ -367,7 +427,7 @@
             // simYawLabel
             // 
             simYawLabel.AutoSize = true;
-            simYawLabel.Location = new Point(59, 130);
+            simYawLabel.Location = new Point(59, 147);
             simYawLabel.Name = "simYawLabel";
             simYawLabel.Size = new Size(19, 21);
             simYawLabel.TabIndex = 15;
@@ -376,7 +436,7 @@
             // label13
             // 
             label13.AutoSize = true;
-            label13.Location = new Point(10, 190);
+            label13.Location = new Point(10, 207);
             label13.Name = "label13";
             label13.Size = new Size(37, 21);
             label13.TabIndex = 14;
@@ -385,7 +445,7 @@
             // label14
             // 
             label14.AutoSize = true;
-            label14.Location = new Point(10, 160);
+            label14.Location = new Point(10, 177);
             label14.Name = "label14";
             label14.Size = new Size(44, 21);
             label14.TabIndex = 13;
@@ -394,7 +454,7 @@
             // label15
             // 
             label15.AutoSize = true;
-            label15.Location = new Point(9, 130);
+            label15.Location = new Point(9, 147);
             label15.Name = "label15";
             label15.Size = new Size(38, 21);
             label15.TabIndex = 12;
@@ -402,32 +462,37 @@
             // 
             // simGoToZeroButton
             // 
-            simGoToZeroButton.Location = new Point(138, 73);
+            simGoToZeroButton.Enabled = false;
+            simGoToZeroButton.Location = new Point(290, 73);
             simGoToZeroButton.Margin = new Padding(4);
             simGoToZeroButton.Name = "simGoToZeroButton";
             simGoToZeroButton.Size = new Size(119, 36);
             simGoToZeroButton.TabIndex = 3;
             simGoToZeroButton.Text = "Go To Zero";
             simGoToZeroButton.UseVisualStyleBackColor = true;
+            simGoToZeroButton.Click += simGoToZeroButton_Click;
             // 
             // simStartStopHomingButton
             // 
-            simStartStopHomingButton.Location = new Point(336, 73);
+            simStartStopHomingButton.Enabled = false;
+            simStartStopHomingButton.Location = new Point(466, 73);
             simStartStopHomingButton.Margin = new Padding(4);
             simStartStopHomingButton.Name = "simStartStopHomingButton";
             simStartStopHomingButton.Size = new Size(144, 36);
             simStartStopHomingButton.TabIndex = 2;
             simStartStopHomingButton.Text = "Start Homing";
             simStartStopHomingButton.UseVisualStyleBackColor = true;
+            simStartStopHomingButton.Click += simStartStopHomingButton_Click;
             // 
-            // simHubStatusLabel
+            // testMoveButton
             // 
-            simHubStatusLabel.AutoSize = true;
-            simHubStatusLabel.Location = new Point(10, 35);
-            simHubStatusLabel.Name = "simHubStatusLabel";
-            simHubStatusLabel.Size = new Size(185, 21);
-            simHubStatusLabel.TabIndex = 19;
-            simHubStatusLabel.Text = "Status: NOT CONNECTED";
+            testMoveButton.Location = new Point(463, 198);
+            testMoveButton.Name = "testMoveButton";
+            testMoveButton.Size = new Size(94, 29);
+            testMoveButton.TabIndex = 24;
+            testMoveButton.Text = "Test Move";
+            testMoveButton.UseVisualStyleBackColor = true;
+            testMoveButton.Click += testMoveButton_Click;
             // 
             // MainView
             // 
@@ -485,5 +550,10 @@
         private Button simYawZeroButton;
         private Button telemetryZeroYawButton;
         private Label simHubStatusLabel;
+        private Label rollCmdLabel;
+        private Label pitchCmdLabel;
+        private Label yawRateCmdLabel;
+        private Label label1;
+        private Button testMoveButton;
     }
 }

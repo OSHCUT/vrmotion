@@ -10,6 +10,7 @@ namespace SimController
     {
         public Boolean portConnected = false;
         public Boolean motorsEnabled = false;
+        public Boolean movingToZero = false;
         public Boolean motorsHomed = false;
         public Boolean homingInProgress = false;
 

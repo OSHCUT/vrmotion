@@ -20,6 +20,8 @@ namespace CSharpMotionEx
         const int NUM_MOVES = 5;
         const int TIME_TILL_TIMEOUT = 10000;//The timeout used for homing(ms)
 
+
+
         static void ExitProgram(int errCode)
         {
             Console.WriteLine("Press enter to continue.");
