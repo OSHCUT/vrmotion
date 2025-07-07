@@ -53,9 +53,10 @@
             label3 = new Label();
             label2 = new Label();
             groupBox2 = new GroupBox();
+            testMoveButton = new Button();
             rollCmdLabel = new Label();
             pitchCmdLabel = new Label();
-            yawRateCmdLabel = new Label();
+            yawCmdLabel = new Label();
             label1 = new Label();
             simHubStatusLabel = new Label();
             simYawZeroButton = new Button();
@@ -67,7 +68,10 @@
             label15 = new Label();
             simGoToZeroButton = new Button();
             simStartStopHomingButton = new Button();
-            testMoveButton = new Button();
+            label11 = new Label();
+            rollRateCmdLabel = new Label();
+            pitchRateCmdLabel = new Label();
+            yawRateCmdLabel = new Label();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -77,7 +81,7 @@
             estopButton.BackColor = Color.Red;
             estopButton.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
             estopButton.ForeColor = Color.White;
-            estopButton.Location = new Point(696, 73);
+            estopButton.Location = new Point(977, 69);
             estopButton.Margin = new Padding(4);
             estopButton.Name = "estopButton";
             estopButton.Size = new Size(189, 158);
@@ -325,10 +329,14 @@
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(rollRateCmdLabel);
+            groupBox2.Controls.Add(pitchRateCmdLabel);
+            groupBox2.Controls.Add(yawRateCmdLabel);
+            groupBox2.Controls.Add(label11);
             groupBox2.Controls.Add(testMoveButton);
             groupBox2.Controls.Add(rollCmdLabel);
             groupBox2.Controls.Add(pitchCmdLabel);
-            groupBox2.Controls.Add(yawRateCmdLabel);
+            groupBox2.Controls.Add(yawCmdLabel);
             groupBox2.Controls.Add(label1);
             groupBox2.Controls.Add(simHubStatusLabel);
             groupBox2.Controls.Add(simYawZeroButton);
@@ -344,10 +352,20 @@
             groupBox2.Controls.Add(simEnableDisableButton);
             groupBox2.Location = new Point(17, 16);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(904, 249);
+            groupBox2.Size = new Size(1190, 249);
             groupBox2.TabIndex = 6;
             groupBox2.TabStop = false;
             groupBox2.Text = "Simulator";
+            // 
+            // testMoveButton
+            // 
+            testMoveButton.Location = new Point(800, 194);
+            testMoveButton.Name = "testMoveButton";
+            testMoveButton.Size = new Size(94, 29);
+            testMoveButton.TabIndex = 24;
+            testMoveButton.Text = "Test Move";
+            testMoveButton.UseVisualStyleBackColor = true;
+            testMoveButton.Click += testMoveButton_Click;
             // 
             // rollCmdLabel
             // 
@@ -367,14 +385,14 @@
             pitchCmdLabel.TabIndex = 22;
             pitchCmdLabel.Text = "...";
             // 
-            // yawRateCmdLabel
+            // yawCmdLabel
             // 
-            yawRateCmdLabel.AutoSize = true;
-            yawRateCmdLabel.Location = new Point(145, 147);
-            yawRateCmdLabel.Name = "yawRateCmdLabel";
-            yawRateCmdLabel.Size = new Size(19, 21);
-            yawRateCmdLabel.TabIndex = 21;
-            yawRateCmdLabel.Text = "...";
+            yawCmdLabel.AutoSize = true;
+            yawCmdLabel.Location = new Point(145, 147);
+            yawCmdLabel.Name = "yawCmdLabel";
+            yawCmdLabel.Size = new Size(19, 21);
+            yawCmdLabel.TabIndex = 21;
+            yawCmdLabel.Text = "...";
             // 
             // label1
             // 
@@ -397,7 +415,7 @@
             // simYawZeroButton
             // 
             simYawZeroButton.Enabled = false;
-            simYawZeroButton.Location = new Point(291, 122);
+            simYawZeroButton.Location = new Point(628, 118);
             simYawZeroButton.Margin = new Padding(4);
             simYawZeroButton.Name = "simYawZeroButton";
             simYawZeroButton.Size = new Size(118, 36);
@@ -463,7 +481,7 @@
             // simGoToZeroButton
             // 
             simGoToZeroButton.Enabled = false;
-            simGoToZeroButton.Location = new Point(290, 73);
+            simGoToZeroButton.Location = new Point(627, 69);
             simGoToZeroButton.Margin = new Padding(4);
             simGoToZeroButton.Name = "simGoToZeroButton";
             simGoToZeroButton.Size = new Size(119, 36);
@@ -475,7 +493,7 @@
             // simStartStopHomingButton
             // 
             simStartStopHomingButton.Enabled = false;
-            simStartStopHomingButton.Location = new Point(466, 73);
+            simStartStopHomingButton.Location = new Point(803, 69);
             simStartStopHomingButton.Margin = new Padding(4);
             simStartStopHomingButton.Name = "simStartStopHomingButton";
             simStartStopHomingButton.Size = new Size(144, 36);
@@ -484,21 +502,47 @@
             simStartStopHomingButton.UseVisualStyleBackColor = true;
             simStartStopHomingButton.Click += simStartStopHomingButton_Click;
             // 
-            // testMoveButton
+            // label11
             // 
-            testMoveButton.Location = new Point(463, 198);
-            testMoveButton.Name = "testMoveButton";
-            testMoveButton.Size = new Size(94, 29);
-            testMoveButton.TabIndex = 24;
-            testMoveButton.Text = "Test Move";
-            testMoveButton.UseVisualStyleBackColor = true;
-            testMoveButton.Click += testMoveButton_Click;
+            label11.AutoSize = true;
+            label11.Location = new Point(242, 129);
+            label11.Name = "label11";
+            label11.Size = new Size(80, 21);
+            label11.TabIndex = 25;
+            label11.Text = "CMD Rate";
+            // 
+            // rollRateCmdLabel
+            // 
+            rollRateCmdLabel.AutoSize = true;
+            rollRateCmdLabel.Location = new Point(242, 207);
+            rollRateCmdLabel.Name = "rollRateCmdLabel";
+            rollRateCmdLabel.Size = new Size(19, 21);
+            rollRateCmdLabel.TabIndex = 28;
+            rollRateCmdLabel.Text = "...";
+            // 
+            // pitchRateCmdLabel
+            // 
+            pitchRateCmdLabel.AutoSize = true;
+            pitchRateCmdLabel.Location = new Point(242, 177);
+            pitchRateCmdLabel.Name = "pitchRateCmdLabel";
+            pitchRateCmdLabel.Size = new Size(19, 21);
+            pitchRateCmdLabel.TabIndex = 27;
+            pitchRateCmdLabel.Text = "...";
+            // 
+            // yawRateCmdLabel
+            // 
+            yawRateCmdLabel.AutoSize = true;
+            yawRateCmdLabel.Location = new Point(242, 147);
+            yawRateCmdLabel.Name = "yawRateCmdLabel";
+            yawRateCmdLabel.Size = new Size(19, 21);
+            yawRateCmdLabel.TabIndex = 26;
+            yawRateCmdLabel.Text = "...";
             // 
             // MainView
             // 
             AutoScaleDimensions = new SizeF(9F, 21F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(947, 563);
+            ClientSize = new Size(1236, 563);
             Controls.Add(groupBox2);
             Controls.Add(groupBox1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -552,8 +596,12 @@
         private Label simHubStatusLabel;
         private Label rollCmdLabel;
         private Label pitchCmdLabel;
-        private Label yawRateCmdLabel;
+        private Label yawCmdLabel;
         private Label label1;
         private Button testMoveButton;
+        private Label rollRateCmdLabel;
+        private Label pitchRateCmdLabel;
+        private Label yawRateCmdLabel;
+        private Label label11;
     }
 }

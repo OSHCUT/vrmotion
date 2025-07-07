@@ -13,10 +13,15 @@ namespace SimController
 {
     public class CommandedState
     {
-        public double yawRateCountsPerSecond;
-        public int yawPositionCounts;
-        public int pitchPositionCounts;
-        public int rollPositionCounts;
+        public double yawRateCountsPerSecond = 0;
+        public double pitchRateCountsPerSecond = 0;
+        public double rollRateCountsPerSecond = 0;
+
+        public int yawPositionCounts = 0;
+        public int pitchPositionCounts = 0;
+        public int rollPositionCounts = 0;
+
+        public bool isVelocityCommand = false;
     }
     public class SimulatorCommand
     {
@@ -42,7 +47,7 @@ namespace SimController
         private const int pitchNodeIndex = 1;
         private const int rollNodeIndex = 0;
 
-        private int maxAcceleration = 5000; // Max acceleration in RPM / s for normal motion
+        private int maxAcceleration = 6000; // Max acceleration in RPM / s for normal motion
         private int maxVelocity = 2000; // Max velocity in RPM / s for normal motion
 
         public event Action<string>? StatusChanged;
@@ -204,13 +209,32 @@ namespace SimController
                 GotoZero();
             } else if (cmd.Name == "StartUnmonitoredMove")
             {
-                StartUnmonitoredMove(cmd.Data.yawRateCountsPerSecond, cmd.Data.pitchPositionCounts, cmd.Data.rollPositionCounts);
+                StartUnmonitoredMove(cmd);
             } else
             {
                 throw new ArgumentException($"Unknown command: {cmd.Name}");
             }
 
             return $"Handled command: {cmd.Name}";
+        }
+
+        private void refreshPitchAndRollMotorPositions()
+        {
+            if (myNodes != null && myNodes.Length == 3)
+            {
+                var pitchNode = myNodes[pitchNodeIndex];
+                var rollNode = myNodes[rollNodeIndex];
+
+                pitchNode.Motion.PosnMeasured.Refresh();
+                rollNode.Motion.PosnMeasured.Refresh();
+
+                int pitchPosition = (int)myNodes[pitchNodeIndex].Motion.PosnMeasured.Value();
+                int rollPosition = -(int)myNodes[rollNodeIndex].Motion.PosnMeasured.Value();
+                simulatorState.pitchCounts = pitchPosition;
+                simulatorState.rollCounts = rollPosition;
+                
+                StateReporter.Report(simulatorState);
+            }
         }
 
         private void PollMotors()
@@ -224,7 +248,7 @@ namespace SimController
 
                 int yawPosition = (int)myNodes[yawNodeIndex].Motion.PosnMeasured.Value();
                 int pitchPosition = (int)myNodes[pitchNodeIndex].Motion.PosnMeasured.Value();
-                int rollPosition = (int)myNodes[rollNodeIndex].Motion.PosnMeasured.Value();
+                int rollPosition = -(int)myNodes[rollNodeIndex].Motion.PosnMeasured.Value();
                 int yawRate = (int)myNodes[yawNodeIndex].Motion.VelMeasured.Value();
 
                 simulatorState.yawCounts = yawPosition;
@@ -439,46 +463,66 @@ namespace SimController
             }
         }
 
-        private void StartUnmonitoredMove(double yawRateCountsPerSecond, int pitchPositionCounts, int rollPositionCounts)
+        private void StartUnmonitoredMove(SimulatorCommand cmd)
         {
             AssertReadyToMove();
+
+            var tasks = new List<Task>();
 
             if (myNodes != null)
             {
                 for (int n = 0; n < myNodes.Length; n++)
                 {
-                    // TODO: Find out whether this is necessary on every move, and whether it causes COM to the motor controller.
-                    myNodes[n].Motion.MoveWentDone();
-                    myNodes[n].AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
-                    myNodes[n].VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
-                    myNodes[n].Motion.AccLimit.Value(maxAcceleration);      // Set Acceleration Limit (RPM/Sec)
-                    myNodes[n].Motion.VelLimit.Value(maxVelocity);              // Set Velocity Limit (RPM)
+                    var node = myNodes[n];
 
-                    // Wrap motion commands in Task.Run. Doing this causes the sFoundation library to issue each command back to back,
-                    // instead of waiting for a serial response from the motor controller on each one (eg. it halves the time it takes to start
-                    // all three motors moving. This is a recommendation from Teknic support.)
+                    // TODO: Find out whether this is necessary on every move, and whether it causes COM to the motor controller.
+                    node.Motion.MoveWentDone();
+                    node.AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
+                    node.VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
+                    node.Motion.AccLimit.Value(maxAcceleration);      // Set Acceleration Limit (RPM/Sec)
+                    node.Motion.VelLimit.Value(maxVelocity);              // Set Velocity Limit (RPM)
+
+                    // Issue these commands in parallel. Teknic support indicated this would
+                    // roughly halve the time to executive all commands, since sFoundation will block and wait
+                    // for a response on each command, but will send all commands sequentially without waiting
+                    // for serial ACK, if the commands are all queued up before the first command is sent.
                     if (n == yawNodeIndex)
                     {
-                        Task.Run(() =>
+                        if (cmd.Data.isVelocityCommand)
                         {
-                            myNodes[n].Motion.MoveVelStart(yawRateCountsPerSecond / CountsPerRevolution * 60);
-                        });                        
+                            tasks.Add(Task.Run(() => node.Motion.MoveVelStart(cmd.Data.yawRateCountsPerSecond / CountsPerRevolution * 60)));
+                        } else
+                        {
+                            tasks.Add(Task.Run(() => node.Motion.MovePosnStart(cmd.Data.yawPositionCounts, true, false)));
+                        }
                     }
                     else if (n == pitchNodeIndex)
                     {
-                        Task.Run(() =>
+                        if (cmd.Data.isVelocityCommand)
                         {
-                            myNodes[n].Motion.MovePosnStart(pitchPositionCounts, true, false);
-                        });
+                            tasks.Add(Task.Run(() => node.Motion.MoveVelStart(cmd.Data.pitchRateCountsPerSecond / CountsPerRevolution * 60)));
+                        }
+                        else
+                        {
+                            tasks.Add(Task.Run(() => node.Motion.MovePosnStart(cmd.Data.pitchPositionCounts, true, false)));
+                        }
                     }
                     else if (n == rollNodeIndex)
                     {
-                        Task.Run(() =>
+                        if (cmd.Data.isVelocityCommand)
                         {
-                            myNodes[n].Motion.MovePosnStart(rollPositionCounts, true, false);
-                        });
+                            tasks.Add(Task.Run(() => node.Motion.MoveVelStart(-cmd.Data.rollRateCountsPerSecond / CountsPerRevolution * 60)));
+                        }
+                        else
+                        {
+                            tasks.Add(Task.Run(() => node.Motion.MovePosnStart(-cmd.Data.rollPositionCounts, true, false)));
+                        }
                     }
                 }
+
+                Task.WaitAll(tasks.ToArray());
+
+                refreshPitchAndRollMotorPositions();
             }
         }
 
