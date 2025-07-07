@@ -1,4 +1,5 @@
 using System.Globalization;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SimController
 {
@@ -30,7 +31,7 @@ namespace SimController
         private const long yawMaxCommandedCountsPerSecond = (long)(yawMaxCommandedDegreesPerSecond * yawDegreesToCounts);
 
         private long yawZeroCounts = 0;
-        private Boolean yawRateMode = true;    // If true, yaw is moved by telemetry rate, not position.
+        private bool yawRateMode = true;    // If true, yaw is moved by telemetry rate, not position.
         private double yawRateScale = 0.1;  // Affects how accurately yaw rate matches telemetry data. Should range from 0.1 to 1.0.
         private double rollPositionScale = 1.0; // Scale for roll position, affects how exactly roll matches telemetry data. Should range from 0.1 to 1.0. Numbers < 1.0 increase simulation "dynamic range"
         private double pitchPositionScale = 1.0; // Scale for pitch position, affects how exactly pitch matches telemetry data. Should range from 0.1 to 1.0.
@@ -40,7 +41,7 @@ namespace SimController
         private int commandedRollCounts = 0;
         private int commandedPitchCounts = 0;
 
-        private Boolean telemetryMotionEnabled = false; // If true, telemetry data is used to control motors.
+        private bool telemetryMotionEnabled = false; // If true, telemetry data is used to control motors.
         private SimulatorState? simulatorState;
 
         public MainView()
@@ -64,8 +65,11 @@ namespace SimController
 
         private void PollTimer_Tick(object? sender, EventArgs e)
         {
-            SimulatorCommand pollCmd = new SimulatorCommand { Name = "GetState" };
-            _motorInterface?.EnqueueCommand(pollCmd);
+            if (simulatorState != null && simulatorState.portConnected)
+            {
+                SimulatorCommand pollCmd = new SimulatorCommand { Name = "GetState" };
+                _motorInterface?.EnqueueCommand(pollCmd);
+            }
         }
 
         private void OnSimStatusChanged(string message)
@@ -218,24 +222,23 @@ namespace SimController
             rollCmdLabel.Text = commandedRollCounts.ToString();
             yawRateCmdLabel.Text = (commandedYawRateCountsPerSecond / 32000 * 60).ToString();
 
-            if (telemetryMotionEnabled)
+            if (_motorInterface != null && simulatorState != null && simulatorState.portConnected)
             {
-                if (_motorInterface != null)
+                if (telemetryMotionEnabled)
                 {
-                    SimulatorCommand cmd = new();
-                    cmd.Name = "StartUnmonitoredMove";
+                    SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
                     cmd.Data.yawRateCountsPerSecond = commandedYawRateCountsPerSecond;
                     cmd.Data.pitchPositionCounts = commandedPitchCounts;
                     cmd.Data.rollPositionCounts = commandedRollCounts;
                     _motorInterface.EnqueueCommand(cmd);
                 }
+                
             }
         }
 
         private void estopButton_Click(object sender, EventArgs e)
         {
-            SimulatorCommand cmd = new();
-            cmd.Name = "DisableMotors";
+            SimulatorCommand cmd = new SimulatorCommand { Name = "DisableMotors" };
             _motorInterface?.EnqueueCommand(cmd);
             // TODO: Figure out how to interrupt anything the motors are currently doing in a blocking
             // operation. Eg. homing, moving to zero, etc.
@@ -279,15 +282,13 @@ namespace SimController
 
         private void simGoToZeroButton_Click(object sender, EventArgs e)
         {
-            SimulatorCommand cmd = new();
-            cmd.Name = "GotoZero";
+            SimulatorCommand cmd = new SimulatorCommand { Name = "GotoZero" };
             _motorInterface?.EnqueueCommand(cmd);
         }
 
         private void simStartStopHomingButton_Click(object sender, EventArgs e)
         {
-            SimulatorCommand cmd = new();
-            cmd.Name = "ZeroAllMotors";
+            SimulatorCommand cmd = new SimulatorCommand { Name = "ZeroAllMotors" };
             _motorInterface?.EnqueueCommand(cmd);
         }
 
@@ -307,8 +308,7 @@ namespace SimController
 
         private void testMoveButton_Click(object sender, EventArgs e)
         {
-            SimulatorCommand cmd = new();
-            cmd.Name = "StartUnmonitoredMove";
+            SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
             cmd.Data.yawRateCountsPerSecond = 0;
             cmd.Data.pitchPositionCounts = (int)(15 * pitchDegreesToCounts);
             cmd.Data.rollPositionCounts = (int)(15 * rollDegreesToCounts);
