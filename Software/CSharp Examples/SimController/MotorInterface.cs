@@ -1,17 +1,32 @@
 ﻿using sFndCLIWrapper;
 using System;
-using System.Timers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows.Forms;
 
 namespace SimController
 {
+    public class CommandedState
+    {
+        public double yawRateCountsPerSecond;
+        public int yawPositionCounts;
+        public int pitchPositionCounts;
+        public int rollPositionCounts;
+    }
+    public class SimulatorCommand
+    {
+        public string Name { get; set; } = "";
+        public CommandedState Data { get; set; } = new CommandedState();
+    }
+
     internal class MotorInterface
     {
-        private readonly System.Timers.Timer _timer;
+        private readonly BlockingCollection<SimulatorCommand> _commandQueue = new();
+        private readonly CancellationTokenSource _cts = new();
 
         const int HOMING_TIMEOUT_MS = 60000;
 
@@ -40,10 +55,6 @@ namespace SimController
             StatusReporter = new Progress<string>(msg => StatusChanged?.Invoke(msg));
             StateReporter = new Progress<SimulatorState>(state => StateChanged?.Invoke(state));
             simulatorState = new SimulatorState();
-
-            _timer = new System.Timers.Timer(100); // 10 Hz interval - not used for control
-            _timer.Elapsed += PollMotors;
-            _timer.AutoReset = true;
         }
 
         public void Start()
@@ -95,7 +106,7 @@ namespace SimController
                     simulatorState.portConnected = true;
                     StateReporter.Report(simulatorState);
 
-                    _timer.Start();
+                    ProcessCommands();
                 }
                 catch (Exception e)
                 {
@@ -105,7 +116,73 @@ namespace SimController
             });
         }
 
-        public void PollMotors(object? sender, ElapsedEventArgs e)
+        public void EnqueueCommand(SimulatorCommand command)
+        {
+            _commandQueue.Add(command);
+        }
+
+        public void Stop()
+        {
+            _cts.Cancel();
+            _commandQueue.CompleteAdding();
+        }
+
+        private void ProcessCommands()
+        {
+            try
+            {
+                foreach (SimulatorCommand cmd in _commandQueue.GetConsumingEnumerable(_cts.Token))
+                {
+                    string result = HandleCommand(cmd);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // TODO: Graceful shutdown
+            }
+        }
+
+        private string HandleCommand(SimulatorCommand cmd)
+        {
+            if (cmd == null)
+            {
+                throw new ArgumentNullException(nameof(cmd), "Command cannot be null.");
+            }
+
+            if (cmd.Name == "GetState")
+            {
+                PollMotors();
+            } else if (cmd.Name == "ZeroAllMotors")
+            {
+                ZeroAllMotors();
+            } else if (cmd.Name == "EnableMotors")
+            {
+                EnableMotors();
+            } else if (cmd.Name == "DisableMotors")
+            {
+                DisableMotors();
+            } else if (cmd.Name == "ClearAlarms")
+            {
+                ClearAlarms();
+            } else if (cmd.Name == "GotoZero")
+            {
+                GotoZero();
+            } else if (cmd.Name == "StartUnmonitoredMove")
+            {
+                if (cmd.Data == null)
+                {
+                    throw new ArgumentException("Command data cannot be null for StartUnmonitoredMove.");
+                }
+                StartUnmonitoredMove(cmd.Data.yawRateCountsPerSecond, cmd.Data.pitchPositionCounts, cmd.Data.rollPositionCounts);
+            } else
+            {
+                throw new ArgumentException($"Unknown command: {cmd.Name}");
+            }
+
+            return $"Handled command: {cmd.Name}";
+        }
+
+        private void PollMotors()
         {
             if (myNodes != null && myNodes.Length == 3)
             {
@@ -126,150 +203,136 @@ namespace SimController
 
                 StateReporter.Report(simulatorState);
             }
-            
         }
-
-        public void ZeroAllMotors()
+        private void ZeroAllMotors()
         {
-            Task.Run(() =>
+            if (simulatorState.portConnected && myMgr != null && myPort != null && myNodes != null)
             {
-                if (simulatorState.portConnected && myMgr != null && myPort != null && myNodes != null)
-                {
-                    Console.WriteLine("Port {0}: state={1}, nodes={2}", myPort.NetNumber(), myPort.OpenState(), myPort.NodeCount());
+                Console.WriteLine("Port {0}: state={1}, nodes={2}", myPort.NetNumber(), myPort.OpenState(), myPort.NodeCount());
 
-                    simulatorState.motorsEnabled = false;
-                    simulatorState.motorsHomed = false;
-                    simulatorState.homingInProgress = true;
-                    StateReporter.Report(simulatorState);
+                simulatorState.motorsEnabled = false;
+                simulatorState.motorsHomed = false;
+                simulatorState.homingInProgress = true;
+                StateReporter.Report(simulatorState);
 
-                    //Once the code gets past this point, it can be assumed that the Port has been opened without issue
-                    //Now we can get a reference to our port object which we will use to access the node objects
-                    for (int n = 0; n < myNodes.Length; n++)
-                    {                       
-                        myNodes[n].EnableReq(false);
-                        myMgr.Delay(200);
+                //Once the code gets past this point, it can be assumed that the Port has been opened without issue
+                //Now we can get a reference to our port object which we will use to access the node objects
+                for (int n = 0; n < myNodes.Length; n++)
+                {                       
+                    myNodes[n].EnableReq(false);
+                    myMgr.Delay(200);
 
-                        Console.WriteLine("   Node[{0}]: type={1}", n, myNodes[n].Info.NodeType());
-                        Console.WriteLine("            userID: {0}", myNodes[n].Info.UserID);
-                        Console.WriteLine("        FW version: {0}", myNodes[n].Info.FirmwareVersion.Value());
-                        Console.WriteLine("          Serial #: {0}", myNodes[n].Info.SerialNumber.Value());
-                        Console.WriteLine("             Model: {0}", myNodes[n].Info.Model.Value());
+                    Console.WriteLine("   Node[{0}]: type={1}", n, myNodes[n].Info.NodeType());
+                    Console.WriteLine("            userID: {0}", myNodes[n].Info.UserID);
+                    Console.WriteLine("        FW version: {0}", myNodes[n].Info.FirmwareVersion.Value());
+                    Console.WriteLine("          Serial #: {0}", myNodes[n].Info.SerialNumber.Value());
+                    Console.WriteLine("             Model: {0}", myNodes[n].Info.Model.Value());
 
-                        // The following statements will attempt to enable the node.  First,
-                        // any shutdowns or NodeStops are cleared, finally the node is enabled
-                        myNodes[n].Status.AlertsClear();
-                        myNodes[n].Motion.NodeStopClear();
-                        myNodes[n].EnableReq(true);
-                        Console.WriteLine("Node {0} enabled.", n);
-                        double timeout = myMgr.TimeStampMsec() + HOMING_TIMEOUT_MS;     // Define a timeout in case the node is unable to enable
-                                                                                        // This will loop checking on the Real time values of the node's Ready status
-                        while (!myNodes[n].Motion.IsReady())
+                    // The following statements will attempt to enable the node.  First,
+                    // any shutdowns or NodeStops are cleared, finally the node is enabled
+                    myNodes[n].Status.AlertsClear();
+                    myNodes[n].Motion.NodeStopClear();
+                    myNodes[n].EnableReq(true);
+                    Console.WriteLine("Node {0} enabled.", n);
+                    double timeout = myMgr.TimeStampMsec() + HOMING_TIMEOUT_MS;     // Define a timeout in case the node is unable to enable
+                                                                                    // This will loop checking on the Real time values of the node's Ready status
+                    while (!myNodes[n].Motion.IsReady())
+                    {
+                        if (myMgr.TimeStampMsec() > timeout)
                         {
-                            if (myMgr.TimeStampMsec() > timeout)
-                            {
-                                Console.WriteLine("Error: Timed out waiting for Node {0} to enable.", n);
-                            }
+                            Console.WriteLine("Error: Timed out waiting for Node {0} to enable.", n);
                         }
+                    }
 
-                        if (myNodes[n].Motion.Homing.HomingValid())
+                    if (myNodes[n].Motion.Homing.HomingValid())
+                    {
+                        if (myNodes[n].Motion.Homing.WasHomed())
                         {
-                            if (myNodes[n].Motion.Homing.WasHomed())
-                            {
-                                Console.WriteLine("Node {0} has already been homed, current position is: {1} ", n, myNodes[n].Motion.PosnMeasured.Value());
-                                Console.WriteLine("Rehoming Node... \n");
-                            }
-                            else
-                            {
-                                Console.WriteLine("Node [{0}] has not been homed.  Homing Node now...", n);
-                            }
-                            // Now we will home the Node
-                            myNodes[n].Motion.Homing.Initiate();
-
-                            timeout = myMgr.TimeStampMsec() + HOMING_TIMEOUT_MS;    // Define a timeout in case the node is unable to enable
-                                                                                    // Basic mode - Poll until disabled
-                            while (!myNodes[n].Motion.Homing.WasHomed())
-                            {
-                                if (myMgr.TimeStampMsec() > timeout)
-                                {
-                                    Console.WriteLine("Node did not complete homing:  \n\t -Ensure Homing settings have been defined through ClearView. \n\t -Check for alerts/Shutdowns \n\t -Ensure timeout is longer than the longest possible homing move.");
-
-                                }
-                            }
-                            myNodes[n].Motion.PosnMeasured.Refresh();      // Refresh our current measured position
-                            Console.WriteLine("Node completed homing, current position: {0} ", myNodes[n].Motion.PosnMeasured.Value());
-                            Console.WriteLine("Soft limits now active");
+                            Console.WriteLine("Node {0} has already been homed, current position is: {1} ", n, myNodes[n].Motion.PosnMeasured.Value());
+                            Console.WriteLine("Rehoming Node... \n");
                         }
                         else
                         {
-                            Console.WriteLine("Node[{0}] has not had homing setup through ClearView.  The node will not be homed.", n);
+                            Console.WriteLine("Node [{0}] has not been homed.  Homing Node now...", n);
                         }
+                        // Now we will home the Node
+                        myNodes[n].Motion.Homing.Initiate();
 
-                        // Disable the node
-                        Console.WriteLine("Disabling Node.");
-                        myNodes[n].EnableReq(false);
+                        timeout = myMgr.TimeStampMsec() + HOMING_TIMEOUT_MS;    // Define a timeout in case the node is unable to enable
+                                                                                // Basic mode - Poll until disabled
+                        while (!myNodes[n].Motion.Homing.WasHomed())
+                        {
+                            if (myMgr.TimeStampMsec() > timeout)
+                            {
+                                Console.WriteLine("Node did not complete homing:  \n\t -Ensure Homing settings have been defined through ClearView. \n\t -Check for alerts/Shutdowns \n\t -Ensure timeout is longer than the longest possible homing move.");
+
+                            }
+                        }
+                        myNodes[n].Motion.PosnMeasured.Refresh();      // Refresh our current measured position
+                        Console.WriteLine("Node completed homing, current position: {0} ", myNodes[n].Motion.PosnMeasured.Value());
+                        Console.WriteLine("Soft limits now active");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Node[{0}] has not had homing setup through ClearView.  The node will not be homed.", n);
                     }
 
-                    simulatorState.motorsHomed = true;
-                    simulatorState.homingInProgress = false;
-                    StateReporter.Report(simulatorState);
-                }
-            });
-        }
-
-        public void EnableMotors()
-        {
-            if (!simulatorState.portConnected || myNodes == null)
-            {
-                throw new Exception("Call Start() before attempting to enable motors.");
-            }
-
-            Task.Run(() =>
-            {
-                for (int n = 0; n < myNodes.Length; n++)
-                {
-                    myNodes[n].EnableReq(true);
-                }
-                simulatorState.motorsEnabled = true;
-                StateReporter.Report(simulatorState);
-            });
-        }
-
-        public void DisableMotors()
-        {
-            if (!simulatorState.portConnected || myNodes == null)
-            {
-                throw new Exception("Call Start() before attempting to enable motors.");
-            }
-
-            Task.Run(() =>
-            {
-                for (int n = 0; n < myNodes.Length; n++)
-                {
+                    // Disable the node
+                    Console.WriteLine("Disabling Node.");
                     myNodes[n].EnableReq(false);
                 }
-                simulatorState.motorsEnabled = false;
+
+                simulatorState.motorsHomed = true;
+                simulatorState.homingInProgress = false;
                 StateReporter.Report(simulatorState);
-            });
+            }
         }
 
-        public void ClearAlarms()
+        private void EnableMotors()
+        {
+            if (!simulatorState.portConnected || myNodes == null)
+            {
+                throw new Exception("Call Start() before attempting to enable motors.");
+            }
+
+            for (int n = 0; n < myNodes.Length; n++)
+            {
+                myNodes[n].EnableReq(true);
+            }
+            simulatorState.motorsEnabled = true;
+            StateReporter.Report(simulatorState);
+        }
+
+        private void DisableMotors()
+        {
+            if (!simulatorState.portConnected || myNodes == null)
+            {
+                throw new Exception("Call Start() before attempting to enable motors.");
+            }
+
+            for (int n = 0; n < myNodes.Length; n++)
+            {
+                myNodes[n].EnableReq(false);
+            }
+            simulatorState.motorsEnabled = false;
+            StateReporter.Report(simulatorState);
+        }
+
+        private void ClearAlarms()
         {
             if (!simulatorState.portConnected || myNodes == null)
             {
                 throw new Exception("Cannot clear alarms. Not connected.");
             }
 
-            Task.Run(() =>
+            for (int n = 0; n < myNodes.Length; n++)
             {
-                for (int n = 0; n < myNodes.Length; n++)
-                {
-                    myNodes[n].Status.AlertsClear();
-                    myNodes[n].Motion.NodeStopClear();
-                }
-            });
+                myNodes[n].Status.AlertsClear();
+                myNodes[n].Motion.NodeStopClear();
+            }
         }
 
-        public void AssertReadyToMove()
+        private void AssertReadyToMove()
         {
             if (!simulatorState.portConnected || myNodes == null || myPort == null || myMgr == null)
             {
@@ -292,91 +355,83 @@ namespace SimController
             }
         }
 
-        public void GotoZero()
+        private void GotoZero()
         {
             AssertReadyToMove();
 
             if (myNodes != null && myMgr != null)
             {
-                Task.Run(() =>
-                {
-                    simulatorState.movingToZero = true;
-                    StateReporter.Report(simulatorState);
+                simulatorState.movingToZero = true;
+                StateReporter.Report(simulatorState);
 
-                    // Clear the rising edge Move done register on all axes and set movement units
-                    List<double> timeouts = new List<double>(3);
+                // Clear the rising edge Move done register on all axes and set movement units
+                List<double> timeouts = new List<double>(3);
+                for (int n = 0; n < myNodes.Length; n++)
+                {
+                    myNodes[n].Motion.MoveWentDone();
+                    myNodes[n].AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
+                    myNodes[n].VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
+                    myNodes[n].Motion.AccLimit.Value(1000);      // Set Acceleration Limit (RPM/Sec)
+                    myNodes[n].Motion.VelLimit.Value(200);              // Set Velocity Limit (RPM)
+
+                    myNodes[n].Motion.PosnMeasured.Refresh();      // Refresh our current measured position
+                    int currentPosition = (int)Math.Round(myNodes[n].Motion.PosnMeasured.Value());
+                    myNodes[n].Motion.MovePosnStart(0, true, false);
+                    double timeout = myMgr.TimeStampMsec() + myNodes[n].Motion.MovePosnDurationMsec(Math.Abs(currentPosition), false) + 1000;
+                    timeouts.Add(timeout);
+                }
+
+                simulatorState.movingToZero = false;
+                StateReporter.Report(simulatorState);
+
+                return;
+                /*
+                Boolean finishedOrTimedOut = false;
+                while (!finishedOrTimedOut)
+                {
                     for (int n = 0; n < myNodes.Length; n++)
                     {
-                        myNodes[n].Motion.MoveWentDone();
-                        myNodes[n].AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
-                        myNodes[n].VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
-                        myNodes[n].Motion.AccLimit.Value(1000);      // Set Acceleration Limit (RPM/Sec)
-                        myNodes[n].Motion.VelLimit.Value(200);              // Set Velocity Limit (RPM)
 
-                        myNodes[n].Motion.PosnMeasured.Refresh();      // Refresh our current measured position
-                        int currentPosition = (int)Math.Round(myNodes[n].Motion.PosnMeasured.Value());
-                        myNodes[n].Motion.MovePosnStart(0, true, false);
-                        double timeout = myMgr.TimeStampMsec() + myNodes[n].Motion.MovePosnDurationMsec(Math.Abs(currentPosition), false) + 1000;
-                        timeouts.Add(timeout);
                     }
-
-                    simulatorState.movingToZero = false;
-                    StateReporter.Report(simulatorState);
-
-                    return;
-                    /*
-                    Boolean finishedOrTimedOut = false;
-                    while (!finishedOrTimedOut)
-                    {
-                        for (int n = 0; n < myNodes.Length; n++)
-                        {
-
-                        }
-                    }
-                    */
-                });
+                }
+                */
             }
         }
 
-        public void startUnmonitoredMove(double yawRateCountsPerSecond, int pitchPositionCounts, int rollPositionCounts)
+        private void StartUnmonitoredMove(double yawRateCountsPerSecond, int pitchPositionCounts, int rollPositionCounts)
         {
             AssertReadyToMove();
 
-            Task.Run(() =>
+            if (myNodes != null)
             {
-                if (myNodes != null)
+                for (int n = 0; n < myNodes.Length; n++)
                 {
-                    for (int n = 0; n < myNodes.Length; n++)
-                    {
-                        myNodes[n].Motion.MoveWentDone();
-                        myNodes[n].AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
-                        myNodes[n].VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
-                        myNodes[n].Motion.AccLimit.Value(maxAcceleration);      // Set Acceleration Limit (RPM/Sec)
-                        myNodes[n].Motion.VelLimit.Value(maxVelocity);              // Set Velocity Limit (RPM)
+                    myNodes[n].Motion.MoveWentDone();
+                    myNodes[n].AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
+                    myNodes[n].VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
+                    myNodes[n].Motion.AccLimit.Value(maxAcceleration);      // Set Acceleration Limit (RPM/Sec)
+                    myNodes[n].Motion.VelLimit.Value(maxVelocity);              // Set Velocity Limit (RPM)
 
-                        if (n == yawNodeIndex)
-                        {
-                            myNodes[n].Motion.MoveVelStart(yawRateCountsPerSecond / CountsPerRevolution * 60);
-                        }
-                        else if (n == pitchNodeIndex)
-                        {
-                            myNodes[n].Motion.MovePosnStart(pitchPositionCounts, true, false);
-                        }
-                        else if (n == rollNodeIndex)
-                        {
-                            myNodes[n].Motion.MovePosnStart(rollPositionCounts, true, false);
-                        }
+                    if (n == yawNodeIndex)
+                    {
+                        myNodes[n].Motion.MoveVelStart(yawRateCountsPerSecond / CountsPerRevolution * 60);
+                    }
+                    else if (n == pitchNodeIndex)
+                    {
+                        myNodes[n].Motion.MovePosnStart(pitchPositionCounts, true, false);
+                    }
+                    else if (n == rollNodeIndex)
+                    {
+                        myNodes[n].Motion.MovePosnStart(rollPositionCounts, true, false);
                     }
                 }
-            });
+            }
         }
 
         public void Dispose()
         {
             Task.Run(() =>
             {
-                _timer.Stop();
-
                 // Disable all nodes (motors) and close the ports
                 if (myPort != null && myNodes != null)
                 {
@@ -392,7 +447,6 @@ namespace SimController
                 myMgr?.PortsClose();
                 myPort?.Dispose();
                 myMgr?.Dispose();
-                _timer.Dispose();
 
                 simulatorState.portConnected = false;
                 simulatorState.motorsEnabled = false;

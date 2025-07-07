@@ -210,15 +210,23 @@ namespace SimController
             {
                 if (_motorInterface != null)
                 {
-                    _motorInterface.startUnmonitoredMove(commandedYawRateCountsPerSecond, commandedPitchCounts, commandedRollCounts);
+                    SimulatorCommand cmd = new();
+                    cmd.Name = "StartUnmonitoredMove";
+                    cmd.Data.yawRateCountsPerSecond = commandedYawRateCountsPerSecond;
+                    cmd.Data.pitchPositionCounts = commandedPitchCounts;
+                    cmd.Data.rollPositionCounts = commandedRollCounts;
+                    _motorInterface.EnqueueCommand(cmd);
                 }
             }
         }
 
         private void estopButton_Click(object sender, EventArgs e)
         {
-            // TODO: Stop all motion, disable all motors!
-            _motorInterface?.DisableMotors();
+            SimulatorCommand cmd = new();
+            cmd.Name = "DisableMotors";
+            _motorInterface?.EnqueueCommand(cmd);
+            // TODO: Figure out how to interrupt anything the motors are currently doing in a blocking
+            // operation. Eg. homing, moving to zero, etc.
         }
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
@@ -244,24 +252,31 @@ namespace SimController
 
         private void simEnableDisableButton_Click(object sender, EventArgs e)
         {
+            SimulatorCommand cmd = new();
             if (simulatorState == null || simulatorState.motorsEnabled == false)
             {
-                _motorInterface?.EnableMotors();
+                cmd.Name = "EnableMotors";
+                _motorInterface?.EnqueueCommand(cmd);
             }
             else
             {
-                _motorInterface?.DisableMotors();
+                cmd.Name = "DisableMotors";
+                _motorInterface?.EnqueueCommand(cmd);
             }
         }
 
         private void simGoToZeroButton_Click(object sender, EventArgs e)
         {
-            _motorInterface?.GotoZero();
+            SimulatorCommand cmd = new();
+            cmd.Name = "GotoZero";
+            _motorInterface?.EnqueueCommand(cmd);
         }
 
         private void simStartStopHomingButton_Click(object sender, EventArgs e)
         {
-            _motorInterface?.ZeroAllMotors();
+            SimulatorCommand cmd = new();
+            cmd.Name = "ZeroAllMotors";
+            _motorInterface?.EnqueueCommand(cmd);
         }
 
         private void enableTelemetryLinkButton_Click(object sender, EventArgs e)
@@ -280,8 +295,12 @@ namespace SimController
 
         private void testMoveButton_Click(object sender, EventArgs e)
         {
-           _motorInterface?.startUnmonitoredMove(0, (int)(15 * pitchDegreesToCounts), (int)(15 * rollDegreesToCounts));
-           // _motorInterface?.startUnmonitoredMove(0, (int)500, (int)500);
+            SimulatorCommand cmd = new();
+            cmd.Name = "StartUnmonitoredMove";
+            cmd.Data.yawRateCountsPerSecond = 0;
+            cmd.Data.pitchPositionCounts = (int)(15 * pitchDegreesToCounts);
+            cmd.Data.rollPositionCounts = (int)(15 * rollDegreesToCounts);
+            _motorInterface?.EnqueueCommand(cmd);
         }
     }
 }

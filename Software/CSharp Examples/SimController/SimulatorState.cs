@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SimController
 {
-    internal class SimulatorState
+    public class SimulatorState
     {
         public Boolean portConnected = false;
         public Boolean motorsEnabled = false;
