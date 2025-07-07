@@ -232,6 +232,16 @@ namespace SimController
                 simulatorState.rollCounts = rollPosition;
                 simulatorState.yawRate = yawRate;
 
+                // If our app state thinks we aren't homed, and we aren't homing at the moment, check to see if the motor controller
+                // says we are homed. This allows us to restart the app without having to rehome the motors.
+                if (!simulatorState.motorsHomed && !simulatorState.homingInProgress)
+                {
+                    bool pitchHomed = myNodes[pitchNodeIndex].Motion.Homing.WasHomed();
+                    bool rollHomed = myNodes[rollNodeIndex].Motion.Homing.WasHomed();
+
+                    simulatorState.motorsHomed = pitchHomed && rollHomed;
+                }                    
+
                 StateReporter.Report(simulatorState);
             }
         }
@@ -372,7 +382,7 @@ namespace SimController
 
             if (!simulatorState.motorsHomed)
             {
-             //   throw new Exception("Motors must be homed first.");
+                throw new Exception("Motors must be homed first.");
             }
 
             if (!simulatorState.motorsEnabled)
@@ -437,23 +447,36 @@ namespace SimController
             {
                 for (int n = 0; n < myNodes.Length; n++)
                 {
+                    // TODO: Find out whether this is necessary on every move, and whether it causes COM to the motor controller.
                     myNodes[n].Motion.MoveWentDone();
                     myNodes[n].AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
                     myNodes[n].VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
                     myNodes[n].Motion.AccLimit.Value(maxAcceleration);      // Set Acceleration Limit (RPM/Sec)
                     myNodes[n].Motion.VelLimit.Value(maxVelocity);              // Set Velocity Limit (RPM)
 
+                    // Wrap motion commands in Task.Run. Doing this causes the sFoundation library to issue each command back to back,
+                    // instead of waiting for a serial response from the motor controller on each one (eg. it halves the time it takes to start
+                    // all three motors moving. This is a recommendation from Teknic support.)
                     if (n == yawNodeIndex)
                     {
-                        myNodes[n].Motion.MoveVelStart(yawRateCountsPerSecond / CountsPerRevolution * 60);
+                        Task.Run(() =>
+                        {
+                            myNodes[n].Motion.MoveVelStart(yawRateCountsPerSecond / CountsPerRevolution * 60);
+                        });                        
                     }
                     else if (n == pitchNodeIndex)
                     {
-                        myNodes[n].Motion.MovePosnStart(pitchPositionCounts, true, false);
+                        Task.Run(() =>
+                        {
+                            myNodes[n].Motion.MovePosnStart(pitchPositionCounts, true, false);
+                        });
                     }
                     else if (n == rollNodeIndex)
                     {
-                        myNodes[n].Motion.MovePosnStart(rollPositionCounts, true, false);
+                        Task.Run(() =>
+                        {
+                            myNodes[n].Motion.MovePosnStart(rollPositionCounts, true, false);
+                        });
                     }
                 }
             }
