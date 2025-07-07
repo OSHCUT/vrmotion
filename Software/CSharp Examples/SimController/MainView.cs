@@ -24,7 +24,7 @@ namespace SimController
         private const double yawDegreesToCounts = 1 / yawCountsToDegrees;
 
         private const double pitchMaxCommandedDegrees = 40;
-        private const double rollMaxCommandedDegrees = 40;
+        private const double rollMaxCommandedDegrees = 44;
         private const double rollMaxCommandedDegreesPerSecond = 90;
         private const double pitchMaxCommandedDegreesPerSecond = 90;
         private const double yawMaxCommandedDegreesPerSecond = 90;
