@@ -204,10 +204,6 @@ namespace SimController
                 GotoZero();
             } else if (cmd.Name == "StartUnmonitoredMove")
             {
-                if (cmd.Data == null)
-                {
-                    throw new ArgumentException("Command data cannot be null for StartUnmonitoredMove.");
-                }
                 StartUnmonitoredMove(cmd.Data.yawRateCountsPerSecond, cmd.Data.pitchPositionCounts, cmd.Data.rollPositionCounts);
             } else
             {
