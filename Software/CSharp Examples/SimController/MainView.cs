@@ -432,13 +432,13 @@ namespace SimController
 
         private void enableTelemetryLinkButton_Click(object sender, EventArgs e)
         {
-            if (telemetryMotionEnabled)
+            if (_motorInterface != null && simulatorState != null && simulatorState.portConnected)
             {
-                telemetryMotionEnabled = false;
-                enableTelemetryLinkButton.Text = "Enable Motion";
-
-                if (_motorInterface != null && simulatorState != null && simulatorState.portConnected)
+                if (telemetryMotionEnabled)
                 {
+                    telemetryMotionEnabled = false;
+                    enableTelemetryLinkButton.Text = "Enable Motion";
+
                     // Stop any current motion
                     SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
                     cmd.Data.yawRateCountsPerSecond = 0;
@@ -447,12 +447,17 @@ namespace SimController
                     cmd.Data.isVelocityCommand = true;
 
                     _motorInterface.EnqueueCommand(cmd);
-                }                
-            }
-            else
-            {
-                telemetryMotionEnabled = true;
-                enableTelemetryLinkButton.Text = "Disable Motion";
+                }
+                else
+                {
+                    // Make sure rate limits are configured correctly (required, because the homing and "go to zero"
+                    // commands lower the rates.
+                    SimulatorCommand cmd = new SimulatorCommand { Name = "ConfigureRateLimits" };
+                    _motorInterface.EnqueueCommand(cmd);
+
+                    telemetryMotionEnabled = true;
+                    enableTelemetryLinkButton.Text = "Disable Motion";
+                }
             }
         }
 

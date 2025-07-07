@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace SimController
 {
@@ -207,7 +208,15 @@ namespace SimController
             } else if (cmd.Name == "GotoZero")
             {
                 GotoZero();
-            } else if (cmd.Name == "StartUnmonitoredMove")
+            } else if (cmd.Name == "ConfigureRateLimits")
+            {
+                ConfigureRateLimits();
+            } 
+            else if (cmd.Name == "RefreshPitchAndRollMotorPositions")
+            {
+                refreshPitchAndRollMotorPositions();
+            }
+            else if (cmd.Name == "StartUnmonitoredMove")
             {
                 StartUnmonitoredMove(cmd);
             } else
@@ -463,6 +472,21 @@ namespace SimController
             }
         }
 
+        private void ConfigureRateLimits()
+        {
+            if (myNodes != null && simulatorState.portConnected)
+            {
+                for (int n = 0; n < myNodes.Length; n++)
+                {
+                    var node = myNodes[n];
+                    node.AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
+                    node.VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
+                    node.Motion.AccLimit.Value(maxAcceleration);           // Set Acceleration Limit (RPM/Sec)
+                    node.Motion.VelLimit.Value(maxVelocity);              // Set Velocity Limit (RPM)
+                }
+            }
+        }
+
         private void StartUnmonitoredMove(SimulatorCommand cmd)
         {
             AssertReadyToMove();
@@ -474,13 +498,6 @@ namespace SimController
                 for (int n = 0; n < myNodes.Length; n++)
                 {
                     var node = myNodes[n];
-
-                    // TODO: Find out whether this is necessary on every move, and whether it causes COM to the motor controller.
-                    node.Motion.MoveWentDone();
-                    node.AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
-                    node.VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
-                    node.Motion.AccLimit.Value(maxAcceleration);      // Set Acceleration Limit (RPM/Sec)
-                    node.Motion.VelLimit.Value(maxVelocity);              // Set Velocity Limit (RPM)
 
                     // Issue these commands in parallel. Teknic support indicated this would
                     // roughly halve the time to executive all commands, since sFoundation will block and wait
