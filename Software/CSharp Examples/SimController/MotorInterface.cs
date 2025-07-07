@@ -1,5 +1,6 @@
 ﻿using sFndCLIWrapper;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -129,16 +130,50 @@ namespace SimController
 
         private void ProcessCommands()
         {
-            try
+            while (!_cts.Token.IsCancellationRequested)
             {
-                foreach (SimulatorCommand cmd in _commandQueue.GetConsumingEnumerable(_cts.Token))
+                List<SimulatorCommand> batch = new();
+
+                try
                 {
-                    string result = HandleCommand(cmd);
+                    // Block until at least one item is available
+                    var first = _commandQueue.Take(_cts.Token);
+                    batch.Add(first);
+
+                    // Drain the rest (non-blocking)
+                    while (_commandQueue.TryTake(out var next))
+                    {
+                        batch.Add(next);
+                    }
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                // TODO: Graceful shutdown
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+
+                // Keep only the latest "StartUnmonitoredMove" command or "GetState" command, and preserve other types
+                SimulatorCommand? latestMove = null;
+                SimulatorCommand? latestPoll = null;
+                foreach (var cmd in batch)
+                {
+                    if (cmd.Name == "StartUnmonitoredMove")
+                        latestMove = cmd;
+                    else if (cmd.Name == "GetState")
+                        latestPoll = cmd;
+                    else
+                    {
+                        if (!_cts.Token.IsCancellationRequested)
+                        {
+                            HandleCommand(cmd);
+                        }
+                    }
+                }
+
+                if (!_cts.Token.IsCancellationRequested && latestMove != null)
+                    HandleCommand(latestMove);
+
+                if (!_cts.Token.IsCancellationRequested && latestPoll != null)
+                    HandleCommand(latestPoll);
             }
         }
 
