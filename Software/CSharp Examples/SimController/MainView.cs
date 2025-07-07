@@ -6,6 +6,8 @@ namespace SimController
     {
         private readonly UdpReceiver _receiver;
         private MotorInterface? _motorInterface;
+        private System.Windows.Forms.Timer _pollTimer;
+
 
         private double yaw, pitch, roll;
         private double yawRate, pitchRate, rollRate;
@@ -53,6 +55,17 @@ namespace SimController
             _motorInterface.StatusChanged += OnSimStatusChanged;
             _motorInterface.StateChanged += OnSimStateChanged;
             _motorInterface.Start();
+
+            _pollTimer = new System.Windows.Forms.Timer();
+            _pollTimer.Interval = 200; // milliseconds => 5 Hz
+            _pollTimer.Tick += PollTimer_Tick;
+            _pollTimer.Start();
+        }
+
+        private void PollTimer_Tick(object? sender, EventArgs e)
+        {
+            SimulatorCommand pollCmd = new SimulatorCommand { Name = "GetState" };
+            _motorInterface?.EnqueueCommand(pollCmd);
         }
 
         private void OnSimStatusChanged(string message)
@@ -109,7 +122,6 @@ namespace SimController
             simYawLabel.Text = simulatorState.yawRate.ToString();
             simPitchLabel.Text = simulatorState.pitchCounts.ToString();
             simRollLabel.Text = simulatorState.rollCounts.ToString();
-
         }
 
         private void OnUdpMessageReceived(string message)
