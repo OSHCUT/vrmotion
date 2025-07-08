@@ -53,6 +53,10 @@
             label3 = new Label();
             label2 = new Label();
             groupBox2 = new GroupBox();
+            rollRateCmdLabel = new Label();
+            pitchRateCmdLabel = new Label();
+            yawRateCmdLabel = new Label();
+            label11 = new Label();
             testMoveButton = new Button();
             rollCmdLabel = new Label();
             pitchCmdLabel = new Label();
@@ -68,10 +72,7 @@
             label15 = new Label();
             simGoToZeroButton = new Button();
             simStartStopHomingButton = new Button();
-            label11 = new Label();
-            rollRateCmdLabel = new Label();
-            pitchRateCmdLabel = new Label();
-            yawRateCmdLabel = new Label();
+            telemetryStatusLabel = new Label();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -114,6 +115,7 @@
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(telemetryStatusLabel);
             groupBox1.Controls.Add(telemetryZeroYawButton);
             groupBox1.Controls.Add(enableTelemetryLinkButton);
             groupBox1.Controls.Add(telemetrySwayLabel);
@@ -135,9 +137,9 @@
             groupBox1.Controls.Add(label4);
             groupBox1.Controls.Add(label3);
             groupBox1.Controls.Add(label2);
-            groupBox1.Location = new Point(17, 361);
+            groupBox1.Location = new Point(17, 304);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(721, 176);
+            groupBox1.Size = new Size(721, 223);
             groupBox1.TabIndex = 5;
             groupBox1.TabStop = false;
             groupBox1.Text = "Telemetry";
@@ -357,6 +359,42 @@
             groupBox2.TabStop = false;
             groupBox2.Text = "Simulator";
             // 
+            // rollRateCmdLabel
+            // 
+            rollRateCmdLabel.AutoSize = true;
+            rollRateCmdLabel.Location = new Point(242, 207);
+            rollRateCmdLabel.Name = "rollRateCmdLabel";
+            rollRateCmdLabel.Size = new Size(19, 21);
+            rollRateCmdLabel.TabIndex = 28;
+            rollRateCmdLabel.Text = "...";
+            // 
+            // pitchRateCmdLabel
+            // 
+            pitchRateCmdLabel.AutoSize = true;
+            pitchRateCmdLabel.Location = new Point(242, 177);
+            pitchRateCmdLabel.Name = "pitchRateCmdLabel";
+            pitchRateCmdLabel.Size = new Size(19, 21);
+            pitchRateCmdLabel.TabIndex = 27;
+            pitchRateCmdLabel.Text = "...";
+            // 
+            // yawRateCmdLabel
+            // 
+            yawRateCmdLabel.AutoSize = true;
+            yawRateCmdLabel.Location = new Point(242, 147);
+            yawRateCmdLabel.Name = "yawRateCmdLabel";
+            yawRateCmdLabel.Size = new Size(19, 21);
+            yawRateCmdLabel.TabIndex = 26;
+            yawRateCmdLabel.Text = "...";
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Location = new Point(242, 129);
+            label11.Name = "label11";
+            label11.Size = new Size(80, 21);
+            label11.TabIndex = 25;
+            label11.Text = "CMD Rate";
+            // 
             // testMoveButton
             // 
             testMoveButton.Location = new Point(800, 194);
@@ -502,41 +540,14 @@
             simStartStopHomingButton.UseVisualStyleBackColor = true;
             simStartStopHomingButton.Click += simStartStopHomingButton_Click;
             // 
-            // label11
+            // telemetryStatusLabel
             // 
-            label11.AutoSize = true;
-            label11.Location = new Point(242, 129);
-            label11.Name = "label11";
-            label11.Size = new Size(80, 21);
-            label11.TabIndex = 25;
-            label11.Text = "CMD Rate";
-            // 
-            // rollRateCmdLabel
-            // 
-            rollRateCmdLabel.AutoSize = true;
-            rollRateCmdLabel.Location = new Point(242, 207);
-            rollRateCmdLabel.Name = "rollRateCmdLabel";
-            rollRateCmdLabel.Size = new Size(19, 21);
-            rollRateCmdLabel.TabIndex = 28;
-            rollRateCmdLabel.Text = "...";
-            // 
-            // pitchRateCmdLabel
-            // 
-            pitchRateCmdLabel.AutoSize = true;
-            pitchRateCmdLabel.Location = new Point(242, 177);
-            pitchRateCmdLabel.Name = "pitchRateCmdLabel";
-            pitchRateCmdLabel.Size = new Size(19, 21);
-            pitchRateCmdLabel.TabIndex = 27;
-            pitchRateCmdLabel.Text = "...";
-            // 
-            // yawRateCmdLabel
-            // 
-            yawRateCmdLabel.AutoSize = true;
-            yawRateCmdLabel.Location = new Point(242, 147);
-            yawRateCmdLabel.Name = "yawRateCmdLabel";
-            yawRateCmdLabel.Size = new Size(19, 21);
-            yawRateCmdLabel.TabIndex = 26;
-            yawRateCmdLabel.Text = "...";
+            telemetryStatusLabel.AutoSize = true;
+            telemetryStatusLabel.Location = new Point(10, 176);
+            telemetryStatusLabel.Name = "telemetryStatusLabel";
+            telemetryStatusLabel.Size = new Size(123, 21);
+            telemetryStatusLabel.TabIndex = 20;
+            telemetryStatusLabel.Text = "Telemetry Status";
             // 
             // MainView
             // 
@@ -603,5 +614,6 @@
         private Label pitchRateCmdLabel;
         private Label yawRateCmdLabel;
         private Label label11;
+        private Label telemetryStatusLabel;
     }
 }

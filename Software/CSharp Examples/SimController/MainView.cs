@@ -8,7 +8,7 @@ namespace SimController
         private readonly UdpReceiver _receiver;
         private MotorInterface? _motorInterface;
         private System.Windows.Forms.Timer _pollTimer;
-
+        private System.Windows.Forms.Timer _telemetryFailsafeTimer;
 
         private double yaw, pitch, roll;
         private double yawRate, pitchRate, rollRate;
@@ -25,9 +25,9 @@ namespace SimController
 
         private const double pitchMaxCommandedDegrees = 40;
         private const double rollMaxCommandedDegrees = 44;
-        private const double rollMaxCommandedDegreesPerSecond = 90;
-        private const double pitchMaxCommandedDegreesPerSecond = 90;
-        private const double yawMaxCommandedDegreesPerSecond = 90;
+        private const double rollMaxCommandedDegreesPerSecond = 51; // These max rates roughly match 1000 RPM for the motors. Can got higher, but at limited torque.
+        private const double pitchMaxCommandedDegreesPerSecond = 51;
+        private const double yawMaxCommandedDegreesPerSecond = 47;
         private const long pitchMaxCommandedCounts = (long)(pitchMaxCommandedDegrees * pitchDegreesToCounts);
         private const long rollMaxCommandedCounts = (long)(rollMaxCommandedDegrees * rollDegreesToCounts);
         private const long yawMaxCommandedCountsPerSecond = (long)(yawMaxCommandedDegreesPerSecond * yawDegreesToCounts);
@@ -52,6 +52,7 @@ namespace SimController
         private SimulatorState? simulatorState;
 
         const double pitchAndRollDriftCorrectFactor = 0.4; // A small bias to correct for drift in pitch and roll positions over time.
+        private bool telemetryStreamActive = false; // True if we've receive a telemetry packet in the last 100 milliseconds. False otherwise.
 
         public MainView()
         {
@@ -70,6 +71,11 @@ namespace SimController
             _pollTimer.Interval = 200; // milliseconds => 5 Hz
             _pollTimer.Tick += PollTimer_Tick;
             _pollTimer.Start();
+
+            _telemetryFailsafeTimer = new System.Windows.Forms.Timer();
+            _telemetryFailsafeTimer.Interval = 100;
+            _telemetryFailsafeTimer.Tick += TelemetryFailsafeTimer_Tick;
+            _telemetryFailsafeTimer.Start();
         }
 
         private void PollTimer_Tick(object? sender, EventArgs e)
@@ -81,6 +87,35 @@ namespace SimController
             }
         }
 
+        private void TelemetryFailsafeTimer_Tick(object? sender, EventArgs e)
+        {
+            telemetryStreamActive = false;
+            // If we haven't received a telemetry packet in the last 100 milliseconds, stop the motors.
+            if (_motorInterface != null && simulatorState != null && simulatorState.portConnected && telemetryMotionEnabled)
+            {
+                SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
+                cmd.Data.yawRateCountsPerSecond = 0;
+                cmd.Data.pitchRateCountsPerSecond = 0;
+                cmd.Data.rollRateCountsPerSecond = 0;
+                cmd.Data.isVelocityCommand = true;
+                _motorInterface.EnqueueCommand(cmd);
+                telemetryMotionEnabled = false;
+                telemetryStatusLabel.Text = "ERROR: Failed to receive telemetry data in 100ms, motion disabled.";
+            } else
+            {
+                telemetryStatusLabel.Text = "Inactive - No Telemetry Received";
+            }
+            UpdateButtonStates();
+        }
+
+        private void ReportTelemetryReceived()
+        {
+            _telemetryFailsafeTimer.Stop();
+            telemetryStreamActive = true;
+            _telemetryFailsafeTimer.Start();
+            telemetryStatusLabel.Text = "Telemetry active.";
+        }
+
         private void OnSimStatusChanged(string message)
         {
             simHubStatusLabel.Text = "Status: " + message;
@@ -90,6 +125,28 @@ namespace SimController
         private void OnSimStateChanged(SimulatorState simState)
         {
             simulatorState = simState;
+            UpdateButtonStates();
+
+            // Update motor state values
+            simYawLabel.Text = simulatorState.yawRate.ToString("F1");
+            simPitchLabel.Text = simulatorState.pitchCounts.ToString("F1");
+            simRollLabel.Text = simulatorState.rollCounts.ToString("F1");
+        }
+
+        private void UpdateButtonStates()
+        {
+            // Disable all buttons until the simulator is sending us data, showing we are connected.
+            if (simulatorState == null)
+            {
+                simEnableDisableButton.Enabled = false;
+                simStartStopHomingButton.Enabled = false;
+                simGoToZeroButton.Enabled = false;
+                enableTelemetryLinkButton.Enabled = false;
+                testMoveButton.Enabled = false;
+
+                return;
+            }
+
             if (simulatorState.portConnected)
             {
                 simEnableDisableButton.Enabled = true;
@@ -102,41 +159,45 @@ namespace SimController
             if (simulatorState.motorsEnabled)
             {
                 simEnableDisableButton.Text = "Disable";
-
-                if (simulatorState.homingInProgress || simulatorState.movingToZero)
-                {
-                    simStartStopHomingButton.Enabled = false;
-                    simGoToZeroButton.Enabled = false;
-                    enableTelemetryLinkButton.Enabled = true;
-                }
-                else
-                {
-                    simStartStopHomingButton.Enabled = true;
-
-                    if (simulatorState.motorsHomed)
-                    {
-                        simGoToZeroButton.Enabled = true;
-                        enableTelemetryLinkButton.Enabled = true;
-                    }
-                    enableTelemetryLinkButton.Enabled = true;
-                }
             }
             else
             {
                 simEnableDisableButton.Text = "Enable";
+            }
 
-                simGoToZeroButton.Enabled = false;
+            if (simulatorState.motorsEnabled &&
+                (!simulatorState.homingInProgress && !simulatorState.movingToZero && !telemetryMotionEnabled))
+            {
+                simStartStopHomingButton.Enabled = true;
+                simGoToZeroButton.Enabled = true;
+                testMoveButton.Enabled = true;
+
+                if (telemetryStreamActive)
+                {
+                    enableTelemetryLinkButton.Enabled = true;
+                }
+                else
+                {
+                    enableTelemetryLinkButton.Enabled = false;
+                }
+            }
+            else
+            {
                 simStartStopHomingButton.Enabled = false;
-                simYawZeroButton.Enabled = false;
+                simGoToZeroButton.Enabled = false;
+                testMoveButton.Enabled = false;
                 enableTelemetryLinkButton.Enabled = false;
             }
 
-            // Update motor state values
-            simYawLabel.Text = simulatorState.yawRate.ToString("F1");
-            simPitchLabel.Text = simulatorState.pitchCounts.ToString("F1");
-            simRollLabel.Text = simulatorState.rollCounts.ToString("F1");
+            if (telemetryMotionEnabled)
+            {
+                enableTelemetryLinkButton.Text = "Disable Motion";
+            }
+            else
+            {
+                enableTelemetryLinkButton.Text = "Enable Motion";
+            }
         }
-
         private void OnUdpMessageReceived(string message)
         {
             if (InvokeRequired)
@@ -159,6 +220,9 @@ namespace SimController
             {
                 return;
             }
+
+            ReportTelemetryReceived();
+
             if (simulatorState == null)
             {
                 return;
@@ -448,7 +512,7 @@ namespace SimController
 
                     _motorInterface.EnqueueCommand(cmd);
                 }
-                else
+                else if (telemetryStreamActive)
                 {
                     // Make sure rate limits are configured correctly (required, because the homing and "go to zero"
                     // commands lower the rates.
