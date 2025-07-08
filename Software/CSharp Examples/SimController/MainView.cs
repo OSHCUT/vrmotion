@@ -35,9 +35,9 @@ namespace SimController
         private const long pitchMaxCommandedCountsPerSecond = (long)(pitchMaxCommandedDegreesPerSecond * pitchDegreesToCounts);
 
         private long yawZeroCounts = 0;
-        private double yawRateScale = 0;  // Affects how accurately yaw rate matches telemetry data. Should range from 0.1 to 1.0.
-        private double rollPositionScale = 1; // Scale for roll position, affects how exactly roll matches telemetry data. Should range from 0.1 to 1.0. Numbers < 1.0 increase simulation "dynamic range"
-        private double pitchPositionScale = 1; // Scale for pitch position, affects how exactly pitch matches telemetry data. Should range from 0.1 to 1.0.
+        private double yawScale = 0;  // Affects how accurately yaw rate matches telemetry data. Should range from 0.1 to 1.0.
+        private double rollScale = 0.8; // Scale for roll position, affects how exactly roll matches telemetry data. Should range from 0.1 to 1.0. Numbers < 1.0 increase simulation "dynamic range"
+        private double pitchScale = 1; // Scale for pitch position, affects how exactly pitch matches telemetry data. Should range from 0.1 to 1.0.
 
         private int commandedYawCounts = 0;
         private double commandedYawRateCountsPerSecond = 0;
@@ -76,6 +76,15 @@ namespace SimController
             _telemetryFailsafeTimer.Interval = 100;
             _telemetryFailsafeTimer.Tick += TelemetryFailsafeTimer_Tick;
             _telemetryFailsafeTimer.Start();
+
+            trackBarYawScale.Value = (int)Math.Round(yawScale * 100);
+            yawScaleLabel.Text = yawScale.ToString("F2");
+
+            trackBarPitchScale.Value = (int)Math.Round(pitchScale * 100);
+            pitchScaleLabel.Text = pitchScale.ToString("F2");
+
+            trackBarRollScale.Value = (int)Math.Round(rollScale * 100);
+            rollScaleLabel.Text = rollScale.ToString("F2");
         }
 
         private void PollTimer_Tick(object? sender, EventArgs e)
@@ -101,7 +110,8 @@ namespace SimController
                 _motorInterface.EnqueueCommand(cmd);
                 telemetryMotionEnabled = false;
                 telemetryStatusLabel.Text = "ERROR: Failed to receive telemetry data in 100ms, motion disabled.";
-            } else
+            }
+            else
             {
                 telemetryStatusLabel.Text = "Inactive - No Telemetry Received";
             }
@@ -147,6 +157,31 @@ namespace SimController
                 return;
             }
 
+            if (telemetryMotionEnabled)
+            {
+                trackBarYawScale.Enabled = false;
+                trackBarRollScale.Enabled = false;
+                trackBarPitchScale.Enabled = false;
+            } else
+            {
+                trackBarYawScale.Enabled = true;
+                trackBarRollScale.Enabled = true;
+                trackBarPitchScale.Enabled = true;
+            }
+
+            if (simulatorState.motorsHomed)
+            {
+                homingStatusLabel.Text = "Homed";
+            }
+            else if (simulatorState.homingInProgress)
+            {
+                homingStatusLabel.Text = "Homing in Progress...";
+            }
+            else
+            {
+                homingStatusLabel.Text = "Not Homed";
+            }
+
             if (simulatorState.portConnected)
             {
                 simEnableDisableButton.Enabled = true;
@@ -171,27 +206,28 @@ namespace SimController
                 simStartStopHomingButton.Enabled = true;
                 simGoToZeroButton.Enabled = true;
                 testMoveButton.Enabled = true;
-
-                if (telemetryStreamActive)
-                {
-                    enableTelemetryLinkButton.Enabled = true;
-                }
-                else
-                {
-                    enableTelemetryLinkButton.Enabled = false;
-                }
             }
             else
             {
                 simStartStopHomingButton.Enabled = false;
                 simGoToZeroButton.Enabled = false;
                 testMoveButton.Enabled = false;
+            }
+
+            if (telemetryStreamActive && simulatorState.motorsEnabled &&
+                (!simulatorState.homingInProgress && !simulatorState.movingToZero))
+            {
+                enableTelemetryLinkButton.Enabled = true;
+            }
+            else
+            {
                 enableTelemetryLinkButton.Enabled = false;
             }
 
             if (telemetryMotionEnabled)
             {
                 enableTelemetryLinkButton.Text = "Disable Motion";
+                enableTelemetryLinkButton.Enabled = true;
             }
             else
             {
@@ -271,30 +307,30 @@ namespace SimController
 
             if (pitch >= 0)
             {
-                commandedPitchCounts = (int)Math.Min(pitch * pitchDegreesToCounts * pitchPositionScale, pitchMaxCommandedCounts);
+                commandedPitchCounts = (int)Math.Min(pitch * pitchDegreesToCounts * pitchScale, pitchMaxCommandedCounts);
             }
             else
             {
-                commandedPitchCounts = (int)Math.Max(pitch * pitchDegreesToCounts * pitchPositionScale, -pitchMaxCommandedCounts);
+                commandedPitchCounts = (int)Math.Max(pitch * pitchDegreesToCounts * pitchScale, -pitchMaxCommandedCounts);
             }
 
             if (roll >= 0)
             {
-                commandedRollCounts = (int)Math.Min(roll * rollDegreesToCounts * rollPositionScale, rollMaxCommandedCounts);
+                commandedRollCounts = (int)Math.Min(roll * rollDegreesToCounts * rollScale, rollMaxCommandedCounts);
             }
             else
             {
-                commandedRollCounts = (int)Math.Max(roll * rollDegreesToCounts * rollPositionScale, -rollMaxCommandedCounts);
+                commandedRollCounts = (int)Math.Max(roll * rollDegreesToCounts * rollScale, -rollMaxCommandedCounts);
             }
 
             // Rates
             if (yawRate >= 0)
             {
-                commandedYawRateCountsPerSecond = Math.Min(yawRate * yawDegreesToCounts * yawRateScale, yawMaxCommandedCountsPerSecond);
+                commandedYawRateCountsPerSecond = Math.Min(yawRate * yawDegreesToCounts * yawScale, yawMaxCommandedCountsPerSecond);
             }
             else
             {
-                commandedYawRateCountsPerSecond = Math.Max(yawRate * yawDegreesToCounts * yawRateScale, -yawMaxCommandedCountsPerSecond);
+                commandedYawRateCountsPerSecond = Math.Max(yawRate * yawDegreesToCounts * yawScale, -yawMaxCommandedCountsPerSecond);
             }
 
             // Adds a very slight bias to roll rate to correct any long-term drift in the roll position, since we are commanding rates,
@@ -303,11 +339,11 @@ namespace SimController
             double adjustedRollRate;
             if (roll >= 0)
             {
-                adjustedRollRate = (rollRate + pitchAndRollDriftCorrectFactor * (Math.Min(roll, rollMaxCommandedDegrees) - simRoll)) * rollDegreesToCounts * rollPositionScale;
+                adjustedRollRate = (rollRate + pitchAndRollDriftCorrectFactor * (Math.Min(roll, rollMaxCommandedDegrees) - simRoll)) * rollDegreesToCounts * rollScale;
             }
             else
             {
-                adjustedRollRate = (rollRate + pitchAndRollDriftCorrectFactor * (Math.Max(roll, -rollMaxCommandedDegrees) - simRoll)) * rollDegreesToCounts * rollPositionScale;
+                adjustedRollRate = (rollRate + pitchAndRollDriftCorrectFactor * (Math.Max(roll, -rollMaxCommandedDegrees) - simRoll)) * rollDegreesToCounts * rollScale;
             }
 
             // As we approach physical motion limits, alter allowed roll rates to prevent crashing.
@@ -349,7 +385,7 @@ namespace SimController
             }
 
             // If the telemetry is calling for something outside our dynamic range, command zero velocity.
-            if (roll >= rollMaxCommandedDegrees || roll <= -rollMaxCommandedDegrees)
+            if (roll * rollScale >= rollMaxCommandedDegrees || roll * rollScale <= -rollMaxCommandedDegrees)
             {
                 commandedRollRateCountsPerSecond = 0;
             }
@@ -360,10 +396,11 @@ namespace SimController
             double adjustedPitchRate;
             if (pitch >= 0)
             {
-                adjustedPitchRate = (pitchRate + pitchAndRollDriftCorrectFactor * (Math.Min(pitch, pitchMaxCommandedDegrees) - simPitch)) * pitchDegreesToCounts * pitchPositionScale;
-            } else
+                adjustedPitchRate = (pitchRate + pitchAndRollDriftCorrectFactor * (Math.Min(pitch, pitchMaxCommandedDegrees) - simPitch)) * pitchDegreesToCounts * pitchScale;
+            }
+            else
             {
-                adjustedPitchRate = (pitchRate + pitchAndRollDriftCorrectFactor * (Math.Max(pitch, -pitchMaxCommandedDegrees) - simPitch)) * pitchDegreesToCounts * pitchPositionScale;
+                adjustedPitchRate = (pitchRate + pitchAndRollDriftCorrectFactor * (Math.Max(pitch, -pitchMaxCommandedDegrees) - simPitch)) * pitchDegreesToCounts * pitchScale;
             }
 
             // As we approach physical motion limits, alter allowed pitch rates to prevent crashing.
@@ -404,7 +441,7 @@ namespace SimController
                 commandedPitchRateCountsPerSecond = (int)Math.Max(adjustedPitchRate, -pitchMaxCommandedCountsPerSecond);
             }
 
-            if (pitch >= pitchMaxCommandedDegrees || pitch <= -pitchMaxCommandedDegrees)
+            if (pitch * pitchScale >= pitchMaxCommandedDegrees || pitch * pitchScale <= -pitchMaxCommandedDegrees)
             {
                 commandedPitchRateCountsPerSecond = 0;
             }
@@ -429,12 +466,12 @@ namespace SimController
                     cmd.Data.yawPositionCounts = commandedYawCounts;
                     cmd.Data.pitchPositionCounts = commandedPitchCounts;
                     cmd.Data.rollPositionCounts = commandedRollCounts;
-                    
+
                     cmd.Data.isVelocityCommand = true;
-                    
+
                     _motorInterface.EnqueueCommand(cmd);
                 }
-                
+
             }
         }
 
@@ -477,8 +514,13 @@ namespace SimController
             }
             else
             {
+                telemetryMotionEnabled = false;
+                UpdateButtonStates();
+
                 cmd.Name = "DisableMotors";
                 _motorInterface?.EnqueueCommand(cmd);
+
+
             }
         }
 
@@ -501,7 +543,6 @@ namespace SimController
                 if (telemetryMotionEnabled)
                 {
                     telemetryMotionEnabled = false;
-                    enableTelemetryLinkButton.Text = "Enable Motion";
 
                     // Stop any current motion
                     SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
@@ -520,8 +561,8 @@ namespace SimController
                     _motorInterface.EnqueueCommand(cmd);
 
                     telemetryMotionEnabled = true;
-                    enableTelemetryLinkButton.Text = "Disable Motion";
                 }
+                UpdateButtonStates();
             }
         }
 
@@ -534,6 +575,33 @@ namespace SimController
             cmd.Data.rollPositionCounts = (int)(10 * rollDegreesToCounts);
             cmd.Data.isVelocityCommand = false;
             _motorInterface?.EnqueueCommand(cmd);
+        }
+
+        private void trackBarYawScale_ValueChanged(object sender, EventArgs e)
+        {
+            if (!telemetryMotionEnabled)
+            {
+                yawScale = (double)trackBarYawScale.Value / 100;
+                yawScaleLabel.Text = yawScale.ToString("F2");
+            }
+        }
+
+        private void trackBarPitchScale_ValueChanged(object sender, EventArgs e)
+        {
+            if (!telemetryMotionEnabled)
+            {
+                pitchScale = (double)trackBarPitchScale.Value / 100;
+                pitchScaleLabel.Text = pitchScale.ToString("F2");
+            }
+        }
+
+        private void trackBarRollScale_ValueChanged(object sender, EventArgs e)
+        {
+            if (!telemetryMotionEnabled)
+            {
+                rollScale = (double)trackBarRollScale.Value / 100;
+                rollScaleLabel.Text = rollScale.ToString("F2");
+            }
         }
     }
 }
