@@ -255,10 +255,10 @@ namespace SimController
                 myNodes[rollNodeIndex].Motion.PosnMeasured.Refresh();
                 myNodes[yawNodeIndex].Motion.VelMeasured.Refresh();
 
-                int yawPosition = (int)myNodes[yawNodeIndex].Motion.PosnMeasured.Value();
+                int yawPosition = -(int)myNodes[yawNodeIndex].Motion.PosnMeasured.Value();
                 int pitchPosition = (int)myNodes[pitchNodeIndex].Motion.PosnMeasured.Value();
                 int rollPosition = -(int)myNodes[rollNodeIndex].Motion.PosnMeasured.Value();
-                int yawRate = (int)myNodes[yawNodeIndex].Motion.VelMeasured.Value();
+                int yawRate = -(int)myNodes[yawNodeIndex].Motion.VelMeasured.Value();
 
                 simulatorState.yawCounts = yawPosition;
                 simulatorState.pitchCounts = pitchPosition;
@@ -507,10 +507,10 @@ namespace SimController
                     {
                         if (cmd.Data.isVelocityCommand)
                         {
-                            tasks.Add(Task.Run(() => node.Motion.MoveVelStart(cmd.Data.yawRateCountsPerSecond / CountsPerRevolution * 60)));
+                            tasks.Add(Task.Run(() => node.Motion.MoveVelStart(-cmd.Data.yawRateCountsPerSecond / CountsPerRevolution * 60)));
                         } else
                         {
-                            tasks.Add(Task.Run(() => node.Motion.MovePosnStart(cmd.Data.yawPositionCounts, true, false)));
+                            tasks.Add(Task.Run(() => node.Motion.MovePosnStart(-cmd.Data.yawPositionCounts, true, false)));
                         }
                     }
                     else if (n == pitchNodeIndex)
