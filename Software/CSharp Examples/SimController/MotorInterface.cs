@@ -48,7 +48,7 @@ namespace SimController
         private const int pitchNodeIndex = 1;
         private const int rollNodeIndex = 0;
 
-        private int maxAcceleration = 6000; // Max acceleration in RPM / s for normal motion
+        private int maxAcceleration = 3000; // Max acceleration in RPM / s for normal motion
         private int maxVelocity = 2000; // Max velocity in RPM / s for normal motion
 
         public event Action<string>? StatusChanged;

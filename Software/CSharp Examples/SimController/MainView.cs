@@ -51,7 +51,7 @@ namespace SimController
         private bool telemetryMotionEnabled = false; // If true, telemetry data is used to control motors.
         private SimulatorState? simulatorState;
 
-        const double pitchAndRollDriftCorrectFactor = 0.4; // A small bias to correct for drift in pitch and roll positions over time.
+        const double pitchAndRollDriftCorrectFactor = 0.1; // A small bias to correct for drift in pitch and roll positions over time.
         private bool telemetryStreamActive = false; // True if we've receive a telemetry packet in the last 100 milliseconds. False otherwise.
 
         public MainView()
