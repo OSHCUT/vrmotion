@@ -35,9 +35,9 @@ namespace SimController
         private const long pitchMaxCommandedCountsPerSecond = (long)(pitchMaxCommandedDegreesPerSecond * pitchDegreesToCounts);
 
         private long yawZeroCounts = 0;
-        private double yawScale = 0;  // Affects how accurately yaw rate matches telemetry data. Should range from 0.1 to 1.0.
-        private double rollScale = 0.8; // Scale for roll position, affects how exactly roll matches telemetry data. Should range from 0.1 to 1.0. Numbers < 1.0 increase simulation "dynamic range"
-        private double pitchScale = 1; // Scale for pitch position, affects how exactly pitch matches telemetry data. Should range from 0.1 to 1.0.
+        private double yawScale = 1.0;  // Affects how accurately yaw rate matches telemetry data. Should range from 0.1 to 1.0.
+        private double rollScale = 1.0; // Scale for roll position, affects how exactly roll matches telemetry data. Should range from 0.1 to 1.0. Numbers < 1.0 increase simulation "dynamic range"
+        private double pitchScale = 1.0; // Scale for pitch position, affects how exactly pitch matches telemetry data. Should range from 0.1 to 1.0.
 
         private int commandedYawCounts = 0;
         private double commandedYawRateCountsPerSecond = 0;
@@ -51,8 +51,12 @@ namespace SimController
         private bool telemetryMotionEnabled = false; // If true, telemetry data is used to control motors.
         private SimulatorState? simulatorState;
 
-        const double pitchAndRollDriftCorrectFactor = 0.1; // A small bias to correct for drift in pitch and roll positions over time.
+        const double pitchAndRollDriftCorrectFactor = 2.0; // A small bias to correct for drift in pitch and roll positions over time.
         private bool telemetryStreamActive = false; // True if we've receive a telemetry packet in the last 100 milliseconds. False otherwise.
+
+        private bool mixAccelerations = true;
+        private double surgeToPitchFactor = 5.0;
+        private double swayToRollFactor = 5.0;
 
         public MainView()
         {
@@ -292,6 +296,12 @@ namespace SimController
             yawRate = (yawRateRaw / 65536.0) * 180 - 90.0;
             rollRate = (rollRateRaw / 65536.0) * 180 - 90.0;
             pitchRate = (pitchRateRaw / 65536.0) * 180 - 90.0;
+
+            if (mixAccelerations)
+            {
+                roll += sway * swayToRollFactor;
+                pitch += surge * surgeToPitchFactor;
+            }
 
             telemetryYawLabel.Text = $"{yaw:F2}°";
             telemetryRollLabel.Text = $"{roll:F2}°";

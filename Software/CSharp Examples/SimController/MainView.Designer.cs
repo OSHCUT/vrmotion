@@ -367,7 +367,7 @@
             groupBox2.Controls.Add(simEnableDisableButton);
             groupBox2.Location = new Point(17, 16);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(672, 282);
+            groupBox2.Size = new Size(672, 246);
             groupBox2.TabIndex = 6;
             groupBox2.TabStop = false;
             groupBox2.Text = "Simulator";
@@ -375,7 +375,7 @@
             // simHubStatusLabel
             // 
             simHubStatusLabel.AutoSize = true;
-            simHubStatusLabel.Location = new Point(7, 247);
+            simHubStatusLabel.Location = new Point(7, 69);
             simHubStatusLabel.Name = "simHubStatusLabel";
             simHubStatusLabel.Size = new Size(185, 21);
             simHubStatusLabel.TabIndex = 19;
