@@ -56,8 +56,8 @@ namespace SimController
 
         private bool telemetryIsRadians = false;
         private bool mixAccelerations = true;
-        private double surgeToPitchFactor = 40;
-        private double swayToRollFactor = 40;
+        private double surgeToPitchFactor = 2;
+        private double swayToRollFactor = 2;
 
         public MainView()
         {
