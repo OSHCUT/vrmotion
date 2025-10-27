@@ -179,10 +179,12 @@ namespace SimController
 
             // TODO: Send the current simulator state back to the remote control client.
             string simStateJson = "{" +
-                $"\"portConnected\": {simulatorState?.portConnected.ToString().ToLower() ?? "false"}," +
-                $"\"motorsEnabled\": {simulatorState?.motorsEnabled.ToString().ToLower() ?? "false"}," +
-                $"\"motorsHomed\": {simulatorState?.motorsHomed.ToString().ToLower() ?? "false"}," +
-                $"\"homingInProgress\": {simulatorState?.homingInProgress.ToString().ToLower() ?? "false"}" + 
+                $"\"readyToMove\": {((simulatorState != null && simulatorState.portConnected && !simulatorState.homingInProgress && !simulatorState.movingToZero) ? "true" : "false")}," +
+                $"\"telemetryStreamActive\": {telemetryStreamActive.ToString().ToLower() ?? "false"}," +
+                $"\"telemetryMotionEnabled\": {telemetryMotionEnabled.ToString().ToLower() ?? "false"}," +
+                $"\"isHomed\": {simulatorState?.motorsHomed.ToString().ToLower() ?? "false"}," +
+                $"\"isHoming\": {simulatorState?.homingInProgress.ToString().ToLower() ?? "false"}" + 
+                $"\"isMovingToZero\": {simulatorState?.movingToZero.ToString().ToLower() ?? "false"}" +
                 "}";
 
             try

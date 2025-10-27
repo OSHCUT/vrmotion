@@ -9,10 +9,12 @@ namespace SimulatorRemoteControl
 
         private TcpTextClient? _client;
         private bool _isConnected = false;
-        private bool _isRunning = false;
-        private bool _axesZeroed = false;
+        private bool _isReadyToMove = false;
+        private bool _isTelemetryStreamActive = false;
+        private bool _isTelemetryMotionEnabled = false;
         private bool _isHoming = false;
-        private bool _isAtHome = false;
+        private bool _isHomed = false;
+        private bool _isMovingToZero = false;
 
         public SimulatorRemote()
         {
@@ -68,6 +70,7 @@ namespace SimulatorRemoteControl
                 try
                 {
                     await _client.ConnectAsync("127.0.0.1", 5555);
+                    remoteConnectionStatusLabel.Text = "Connected.";
                 } catch (Exception ex)
                 {
                     remoteConnectionStatusLabel.Text = "Failed to connect. Try again.";
@@ -93,6 +96,61 @@ namespace SimulatorRemoteControl
         private void MessageReceived(string line)
         {
             labelLastData.Text = line;
+
+            if (line.IndexOf("readyToMove\": true") >= 0)
+            {
+                _isReadyToMove = true;
+            } else
+            {
+                _isReadyToMove = false;
+            }
+
+            if (line.IndexOf("telemetryStreamActive\": true") >= 0)
+            {
+                _isTelemetryStreamActive = true;
+            }
+            else
+            {
+                _isTelemetryStreamActive = false;
+            }
+
+            if (line.IndexOf("isTelemetryMotionEnabled\": true") >= 0)
+            {
+                _isTelemetryMotionEnabled = true;
+            }
+            else
+            {
+                _isTelemetryMotionEnabled = false;
+            }
+
+            if (line.IndexOf("isHoming\": true") >= 0)
+            {
+                _isHoming = true;
+            }
+            else
+            {
+                _isHoming = false;
+            }
+
+            if (line.IndexOf("isHomed\": true") >= 0)
+            {
+                _isHomed = true;
+            }
+            else
+            {
+                _isHomed = false;
+            }
+
+            if (line.IndexOf("isMovingToZero\": true") >= 0)
+            {
+                _isMovingToZero = true;
+            }
+            else
+            {
+                _isMovingToZero = false;
+            }
+
+            UpdatUiState();
         }
 
         private void UpdatUiState()
@@ -109,18 +167,58 @@ namespace SimulatorRemoteControl
                 return;
             }
 
-            if (_isConnected)
+            // Start/stop button enabled if the machine is ready to move, it is homed, and telemetry stream is active
+            if (!_isTelemetryMotionEnabled)
             {
-                buttonConnect.Text = "Disconnect";
-                remoteConnectionStatusLabel.Text = "Connected to simulator";
-
+                if (_isReadyToMove && _isTelemetryStreamActive && _isHomed)
+                {
+                    buttonStartStop.Enabled = true;
+                }
+                else
+                {
+                    buttonStartStop.Enabled = false;
+                }
+            }
+            // If telemetry motion is enabled, we can always stop
+            else
+            {
                 buttonStartStop.Enabled = true;
-                buttonZeroAxes.Enabled = true;
-                buttonGoHome.Enabled = true;
+            }
+
+            if (_isTelemetryMotionEnabled)
+            {
+                buttonStartStop.Text = "Stop";
             } else
             {
-                buttonConnect.Text = "Connect";
-                remoteConnectionStatusLabel.Text = "Not connected";
+                buttonStartStop.Text = "Start";
+            }
+
+            // Go home button
+            if (!_isTelemetryMotionEnabled && _isHomed && _isReadyToMove && !_isMovingToZero)
+            {
+                buttonGoHome.Enabled = true;
+            }
+            else
+            {
+                buttonGoHome.Enabled = false;
+            }
+
+            if (_isMovingToZero)
+            {
+                buttonGoHome.Text = "Moving Home...";
+            } else
+            {
+                buttonGoHome.Text = "Go Home";
+            }
+
+            // Zero axes button
+            if (!_isTelemetryMotionEnabled && _isReadyToMove && !_isMovingToZero && !_isHoming)
+            {
+                buttonZeroAxes.Enabled = true;
+            }
+            else
+            {
+                buttonZeroAxes.Enabled = false;
             }
         }
 
@@ -146,11 +244,8 @@ namespace SimulatorRemoteControl
             if (_client == null || !_client.IsConnected)
                 return;
 
-            if (_isRunning)
+            if (!_isTelemetryMotionEnabled)
             {
-                buttonStartStop.Text = "Start";
-                _isRunning = false;
-
                 try
                 {
                     await _client.SendAsync("STOP_SIMULATION");
@@ -164,9 +259,6 @@ namespace SimulatorRemoteControl
             }
             else
             {
-                buttonStartStop.Text = "Stop";
-                _isRunning = true;
-
                 try
                 {
                     await _client.SendAsync("START_SIMULATION");

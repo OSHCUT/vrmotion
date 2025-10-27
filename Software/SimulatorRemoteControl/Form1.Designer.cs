@@ -68,7 +68,7 @@
             // buttonGoHome
             // 
             buttonGoHome.Font = new Font("Segoe UI", 36F);
-            buttonGoHome.Location = new Point(29, 77);
+            buttonGoHome.Location = new Point(29, 68);
             buttonGoHome.Name = "buttonGoHome";
             buttonGoHome.Size = new Size(353, 344);
             buttonGoHome.TabIndex = 3;
@@ -79,7 +79,7 @@
             // buttonStartStop
             // 
             buttonStartStop.Font = new Font("Segoe UI", 36F);
-            buttonStartStop.Location = new Point(415, 77);
+            buttonStartStop.Location = new Point(415, 68);
             buttonStartStop.Name = "buttonStartStop";
             buttonStartStop.Size = new Size(353, 344);
             buttonStartStop.TabIndex = 4;
