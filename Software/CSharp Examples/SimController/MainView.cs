@@ -131,6 +131,10 @@ namespace SimController
                 _motorInterface.EnqueueCommand(cmd);
                 telemetryMotionEnabled = false;
                 telemetryStatusLabel.Text = "ERROR: Failed to receive telemetry data in 100ms, motion disabled.";
+
+                // Turn off the motors!
+                SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
+                _motorInterface.EnqueueCommand(cmd2);
             }
             else
             {
@@ -211,11 +215,9 @@ namespace SimController
             // Disable all buttons until the simulator is sending us data, showing we are connected.
             if (simulatorState == null)
             {
-                simEnableDisableButton.Enabled = false;
                 simStartStopHomingButton.Enabled = false;
                 simGoToZeroButton.Enabled = false;
                 enableTelemetryLinkButton.Enabled = false;
-                testMoveButton.Enabled = false;
 
                 return;
             }
@@ -245,36 +247,16 @@ namespace SimController
                 homingStatusLabel.Text = "Not Homed";
             }
 
-            if (simulatorState.portConnected && !remoteControlConnected)
-            {
-                simEnableDisableButton.Enabled = true;
-            }
-            else
-            {
-                simEnableDisableButton.Enabled = false;
-            }
-
-            if (simulatorState.motorsEnabled && !!remoteControlConnected)
-            {
-                simEnableDisableButton.Text = "Disable";
-            }
-            else
-            {
-                simEnableDisableButton.Text = "Enable";
-            }
-
             if (simulatorState.motorsEnabled && !!remoteControlConnected &&
                 (!simulatorState.homingInProgress && !simulatorState.movingToZero && !telemetryMotionEnabled))
             {
                 simStartStopHomingButton.Enabled = true;
                 simGoToZeroButton.Enabled = true;
-                testMoveButton.Enabled = true;
             }
             else
             {
                 simStartStopHomingButton.Enabled = false;
                 simGoToZeroButton.Enabled = false;
-                testMoveButton.Enabled = false;
             }
 
             if (telemetryStreamActive && simulatorState.motorsEnabled && !remoteControlConnected &&
@@ -590,26 +572,6 @@ namespace SimController
 
         }
 
-        private void simEnableDisableButton_Click(object sender, EventArgs e)
-        {
-            SimulatorCommand cmd = new();
-            if (simulatorState == null || simulatorState.motorsEnabled == false)
-            {
-                cmd.Name = "EnableMotors";
-                _motorInterface?.EnqueueCommand(cmd);
-            }
-            else
-            {
-                telemetryMotionEnabled = false;
-                UpdateButtonStates();
-
-                cmd.Name = "DisableMotors";
-                _motorInterface?.EnqueueCommand(cmd);
-
-
-            }
-        }
-
         private void simGoToZeroButton_Click(object sender, EventArgs e)
         {
             SimulatorCommand cmd = new SimulatorCommand { Name = "GotoZero" };
@@ -626,6 +588,7 @@ namespace SimController
         {
             if (_motorInterface != null && simulatorState != null && simulatorState.portConnected)
             {
+                // If currently enabled, stop motion and disable motors.
                 if (telemetryMotionEnabled)
                 {
                     telemetryMotionEnabled = false;
@@ -638,7 +601,11 @@ namespace SimController
                     cmd.Data.isVelocityCommand = true;
 
                     _motorInterface.EnqueueCommand(cmd);
+                    
+                    SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
+                    _motorInterface.EnqueueCommand(cmd2);
                 }
+                // If not enabled, configure rate limits and enable motors, but only if we have an active telemetry stream.
                 else if (telemetryStreamActive)
                 {
                     // Make sure rate limits are configured correctly (required, because the homing and "go to zero"
@@ -646,21 +613,13 @@ namespace SimController
                     SimulatorCommand cmd = new SimulatorCommand { Name = "ConfigureRateLimits" };
                     _motorInterface.EnqueueCommand(cmd);
 
+                    SimulatorCommand cmd2 = new SimulatorCommand { Name = "EnableMotors" };
+                    _motorInterface.EnqueueCommand(cmd2);
+
                     telemetryMotionEnabled = true;
                 }
                 UpdateButtonStates();
             }
-        }
-
-        private void testMoveButton_Click(object sender, EventArgs e)
-        {
-            SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
-            cmd.Data.yawRateCountsPerSecond = 0;
-            cmd.Data.yawPositionCounts = 0;
-            cmd.Data.pitchPositionCounts = (int)(10 * pitchDegreesToCounts);
-            cmd.Data.rollPositionCounts = (int)(10 * rollDegreesToCounts);
-            cmd.Data.isVelocityCommand = false;
-            _motorInterface?.EnqueueCommand(cmd);
         }
 
         private void trackBarYawScale_ValueChanged(object sender, EventArgs e)

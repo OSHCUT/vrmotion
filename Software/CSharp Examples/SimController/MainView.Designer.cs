@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             estopButton = new Button();
-            simEnableDisableButton = new Button();
             telemetryRawPacketLabel = new Label();
             groupBox1 = new GroupBox();
             telemetryStatusLabel = new Label();
@@ -66,7 +65,6 @@
             pitchRateCmdLabel = new Label();
             yawRateCmdLabel = new Label();
             label11 = new Label();
-            testMoveButton = new Button();
             rollCmdLabel = new Label();
             pitchCmdLabel = new Label();
             yawCmdLabel = new Label();
@@ -101,18 +99,6 @@
             estopButton.Text = "STOP";
             estopButton.UseVisualStyleBackColor = false;
             estopButton.Click += estopButton_Click;
-            // 
-            // simEnableDisableButton
-            // 
-            simEnableDisableButton.Enabled = false;
-            simEnableDisableButton.Location = new Point(7, 28);
-            simEnableDisableButton.Margin = new Padding(4);
-            simEnableDisableButton.Name = "simEnableDisableButton";
-            simEnableDisableButton.Size = new Size(84, 34);
-            simEnableDisableButton.TabIndex = 1;
-            simEnableDisableButton.Text = "Enable";
-            simEnableDisableButton.UseVisualStyleBackColor = true;
-            simEnableDisableButton.Click += simEnableDisableButton_Click;
             // 
             // telemetryRawPacketLabel
             // 
@@ -352,7 +338,6 @@
             groupBox2.Controls.Add(pitchRateCmdLabel);
             groupBox2.Controls.Add(yawRateCmdLabel);
             groupBox2.Controls.Add(label11);
-            groupBox2.Controls.Add(testMoveButton);
             groupBox2.Controls.Add(rollCmdLabel);
             groupBox2.Controls.Add(pitchCmdLabel);
             groupBox2.Controls.Add(yawCmdLabel);
@@ -366,7 +351,6 @@
             groupBox2.Controls.Add(label15);
             groupBox2.Controls.Add(simGoToZeroButton);
             groupBox2.Controls.Add(simStartStopHomingButton);
-            groupBox2.Controls.Add(simEnableDisableButton);
             groupBox2.Location = new Point(15, 50);
             groupBox2.Name = "groupBox2";
             groupBox2.Size = new Size(597, 234);
@@ -377,7 +361,7 @@
             // simHubStatusLabel
             // 
             simHubStatusLabel.AutoSize = true;
-            simHubStatusLabel.Location = new Point(6, 66);
+            simHubStatusLabel.Location = new Point(12, 28);
             simHubStatusLabel.Name = "simHubStatusLabel";
             simHubStatusLabel.Size = new Size(175, 20);
             simHubStatusLabel.TabIndex = 19;
@@ -455,7 +439,7 @@
             // homingStatusLabel
             // 
             homingStatusLabel.AutoSize = true;
-            homingStatusLabel.Location = new Point(338, 66);
+            homingStatusLabel.Location = new Point(280, 68);
             homingStatusLabel.Name = "homingStatusLabel";
             homingStatusLabel.Size = new Size(88, 20);
             homingStatusLabel.TabIndex = 29;
@@ -496,17 +480,6 @@
             label11.Size = new Size(76, 20);
             label11.TabIndex = 25;
             label11.Text = "CMD Rate";
-            // 
-            // testMoveButton
-            // 
-            testMoveButton.Enabled = false;
-            testMoveButton.Location = new Point(235, 28);
-            testMoveButton.Name = "testMoveButton";
-            testMoveButton.Size = new Size(85, 34);
-            testMoveButton.TabIndex = 24;
-            testMoveButton.Text = "Test Move";
-            testMoveButton.UseVisualStyleBackColor = true;
-            testMoveButton.Click += testMoveButton_Click;
             // 
             // rollCmdLabel
             // 
@@ -601,7 +574,7 @@
             // simGoToZeroButton
             // 
             simGoToZeroButton.Enabled = false;
-            simGoToZeroButton.Location = new Point(110, 28);
+            simGoToZeroButton.Location = new Point(10, 61);
             simGoToZeroButton.Margin = new Padding(4);
             simGoToZeroButton.Name = "simGoToZeroButton";
             simGoToZeroButton.Size = new Size(106, 34);
@@ -613,7 +586,7 @@
             // simStartStopHomingButton
             // 
             simStartStopHomingButton.Enabled = false;
-            simStartStopHomingButton.Location = new Point(338, 28);
+            simStartStopHomingButton.Location = new Point(136, 61);
             simStartStopHomingButton.Margin = new Padding(4);
             simStartStopHomingButton.Name = "simStartStopHomingButton";
             simStartStopHomingButton.Size = new Size(128, 34);
@@ -669,7 +642,6 @@
         #endregion
 
         private Button estopButton;
-        private Button simEnableDisableButton;
         private Label telemetryRawPacketLabel;
         private GroupBox groupBox1;
         private Label label4;
@@ -705,7 +677,6 @@
         private Label pitchCmdLabel;
         private Label yawCmdLabel;
         private Label label1;
-        private Button testMoveButton;
         private Label rollRateCmdLabel;
         private Label pitchRateCmdLabel;
         private Label yawRateCmdLabel;
