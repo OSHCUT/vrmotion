@@ -10,6 +10,7 @@ namespace SimController
         private MotorInterface? _motorInterface;
         private System.Windows.Forms.Timer _pollTimer;
         private System.Windows.Forms.Timer _telemetryFailsafeTimer;
+        private System.Windows.Forms.Timer _remoteControlFailsafeTimer;
 
         private double yaw, pitch, roll;
         private double yawRate, pitchRate, rollRate;
@@ -86,6 +87,11 @@ namespace SimController
             _telemetryFailsafeTimer.Tick += TelemetryFailsafeTimer_Tick;
             _telemetryFailsafeTimer.Start();
 
+            _remoteControlFailsafeTimer = new System.Windows.Forms.Timer();
+            _remoteControlFailsafeTimer.Interval = 500;
+            _remoteControlFailsafeTimer.Tick += RemoteControlFailsafeTimer_Tick;
+            _remoteControlFailsafeTimer.Start();
+
             trackBarYawScale.Value = (int)Math.Round(yawScale * 100);
             yawScaleLabel.Text = yawScale.ToString("F2");
 
@@ -117,30 +123,45 @@ namespace SimController
             }
         }
 
+        private void RemoteControlFailsafeTimer_Tick(object? sender, EventArgs e)
+        {
+            if (_motorInterface != null && simulatorState != null && simulatorState.portConnected && telemetryMotionEnabled)
+            {
+                telemetryMotionEnabled = false;
+
+                FailsafeTriggered();
+            }
+        }
+
         private void TelemetryFailsafeTimer_Tick(object? sender, EventArgs e)
         {
             telemetryStreamActive = false;
             // If we haven't received a telemetry packet in the last 100 milliseconds, stop the motors.
             if (_motorInterface != null && simulatorState != null && simulatorState.portConnected && telemetryMotionEnabled)
             {
-                SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
-                cmd.Data.yawRateCountsPerSecond = 0;
-                cmd.Data.pitchRateCountsPerSecond = 0;
-                cmd.Data.rollRateCountsPerSecond = 0;
-                cmd.Data.isVelocityCommand = true;
-                _motorInterface.EnqueueCommand(cmd);
-                telemetryMotionEnabled = false;
-                telemetryStatusLabel.Text = "ERROR: Failed to receive telemetry data in 100ms, motion disabled.";
-
-                // Turn off the motors!
-                SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
-                _motorInterface.EnqueueCommand(cmd2);
+                FailsafeTriggered();
             }
             else
             {
                 telemetryStatusLabel.Text = "Inactive - No Telemetry Received";
             }
             UpdateButtonStates();
+        }
+
+        private void FailsafeTriggered()
+        {
+            SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
+            cmd.Data.yawRateCountsPerSecond = 0;
+            cmd.Data.pitchRateCountsPerSecond = 0;
+            cmd.Data.rollRateCountsPerSecond = 0;
+            cmd.Data.isVelocityCommand = true;
+            _motorInterface.EnqueueCommand(cmd);
+            telemetryMotionEnabled = false;
+            telemetryStatusLabel.Text = "ERROR: Failed to receive telemetry data in 100ms, motion disabled.";
+
+            // Turn off the motors!
+            SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
+            _motorInterface.EnqueueCommand(cmd2);
         }
 
         private void ReportTelemetryReceived()
@@ -167,9 +188,31 @@ namespace SimController
 
         private async void OnRemoteControlMessageReceived(string message)
         {
+            _remoteControlFailsafeTimer.Stop();
+            _remoteControlFailsafeTimer.Start();
+
             if (!message.StartsWith("KEEPALIVE"))
             {
                 labelLastRemoteCommand.Text = "Last CMD: " + message;
+            }
+
+            if (message.IndexOf("ZERO_AXES") >= 0)
+            {
+                SimulatorCommand cmd = new SimulatorCommand { Name = "ZeroAllMotors" };
+                _motorInterface?.EnqueueCommand(cmd);
+            }
+            else if (message.IndexOf("STOP_SIMULATION") >= 0)
+            {
+                StopSimulationMotion();
+            }
+            else if (message.IndexOf("START_SIMULATION") >= 0)
+            {
+                StartSimulationMotion();
+            }
+            else if (message.IndexOf("GO_HOME") >= 0)
+            {
+                SimulatorCommand cmd = new SimulatorCommand { Name = "GotoZero" };
+                _motorInterface?.EnqueueCommand(cmd);
             }
 
             if (_remoteControlServer == null || !_remoteControlServer.IsConnected)
@@ -177,7 +220,6 @@ namespace SimController
                 return;
             }
 
-            // TODO: Send the current simulator state back to the remote control client.
             string simStateJson = "{" +
                 $"\"readyToMove\": {((simulatorState != null && simulatorState.portConnected && !simulatorState.homingInProgress && !simulatorState.movingToZero) ? "true" : "false")}," +
                 $"\"telemetryStreamActive\": {telemetryStreamActive.ToString().ToLower() ?? "false"}," +
@@ -588,40 +630,56 @@ namespace SimController
 
         private void enableTelemetryLinkButton_Click(object sender, EventArgs e)
         {
+            // If currently enabled, stop motion and disable motors.
+            if (telemetryMotionEnabled)
+            {
+                StopSimulationMotion();
+            }
+            // If not enabled, configure rate limits and enable motors, but only if we have an active telemetry stream.
+            else if (telemetryStreamActive)
+            {
+                StartSimulationMotion();
+            }
+        }
+
+        private void StartSimulationMotion()
+        {
+            telemetryMotionEnabled = true;
+
             if (_motorInterface != null && simulatorState != null && simulatorState.portConnected)
             {
-                // If currently enabled, stop motion and disable motors.
-                if (telemetryMotionEnabled)
-                {
-                    telemetryMotionEnabled = false;
+                // Make sure rate limits are configured correctly (required, because the homing and "go to zero"
+                // commands lower the rates.
+                SimulatorCommand cmd = new SimulatorCommand { Name = "ConfigureRateLimits" };
+                _motorInterface.EnqueueCommand(cmd);
 
-                    // Stop any current motion
-                    SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
-                    cmd.Data.yawRateCountsPerSecond = 0;
-                    cmd.Data.pitchRateCountsPerSecond = 0;
-                    cmd.Data.rollRateCountsPerSecond = 0;
-                    cmd.Data.isVelocityCommand = true;
-
-                    _motorInterface.EnqueueCommand(cmd);
-                    
-                    SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
-                    _motorInterface.EnqueueCommand(cmd2);
-                }
-                // If not enabled, configure rate limits and enable motors, but only if we have an active telemetry stream.
-                else if (telemetryStreamActive)
-                {
-                    // Make sure rate limits are configured correctly (required, because the homing and "go to zero"
-                    // commands lower the rates.
-                    SimulatorCommand cmd = new SimulatorCommand { Name = "ConfigureRateLimits" };
-                    _motorInterface.EnqueueCommand(cmd);
-
-                    SimulatorCommand cmd2 = new SimulatorCommand { Name = "EnableMotors" };
-                    _motorInterface.EnqueueCommand(cmd2);
-
-                    telemetryMotionEnabled = true;
-                }
-                UpdateButtonStates();
+                SimulatorCommand cmd2 = new SimulatorCommand { Name = "EnableMotors" };
+                _motorInterface.EnqueueCommand(cmd2);
             }
+
+            UpdateButtonStates();
+        }
+
+        private void StopSimulationMotion()
+        {
+            telemetryMotionEnabled = false;
+
+            if (_motorInterface != null && simulatorState != null && simulatorState.portConnected)
+            {
+                // Stop any current motion
+                SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
+                cmd.Data.yawRateCountsPerSecond = 0;
+                cmd.Data.pitchRateCountsPerSecond = 0;
+                cmd.Data.rollRateCountsPerSecond = 0;
+                cmd.Data.isVelocityCommand = true;
+
+                _motorInterface.EnqueueCommand(cmd);
+
+                SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
+                _motorInterface.EnqueueCommand(cmd2);
+            }
+
+            UpdateButtonStates();
         }
 
         private void trackBarYawScale_ValueChanged(object sender, EventArgs e)
