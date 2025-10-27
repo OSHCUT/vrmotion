@@ -1,10 +1,11 @@
 using System.Globalization;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using TcpText;
 
 namespace SimController
 {
     public partial class MainView : Form
     {
+        private TcpTextServer? _remoteControlServer;
         private readonly UdpReceiver _receiver;
         private MotorInterface? _motorInterface;
         private System.Windows.Forms.Timer _pollTimer;
@@ -35,7 +36,7 @@ namespace SimController
         private const long pitchMaxCommandedCountsPerSecond = (long)(pitchMaxCommandedDegreesPerSecond * pitchDegreesToCounts);
 
         private long yawZeroCounts = 0;
-        private double yawScale = 0;  // Affects how accurately yaw rate matches telemetry data. Should range from 0.1 to 1.0.
+        private double yawScale = 1.0;  // Affects how accurately yaw rate matches telemetry data. Should range from 0.1 to 1.0.
         private double rollScale = 1.0; // Scale for roll position, affects how exactly roll matches telemetry data. Should range from 0.1 to 1.0. Numbers < 1.0 increase simulation "dynamic range"
         private double pitchScale = 1.0; // Scale for pitch position, affects how exactly pitch matches telemetry data. Should range from 0.1 to 1.0.
 
@@ -48,6 +49,7 @@ namespace SimController
         private int commandedPitchCounts = 0;
         private double commandedPitchRateCountsPerSecond = 0;
 
+        private bool remoteControlConnected = false;
         private bool telemetryMotionEnabled = false; // If true, telemetry data is used to control motors.
         private SimulatorState? simulatorState;
 
@@ -62,6 +64,8 @@ namespace SimController
         public MainView()
         {
             InitializeComponent();
+
+            this.Load += StartRemoteControlServer;
 
             _receiver = new UdpReceiver(5123);
             _receiver.MessageReceived += OnUdpMessageReceived;
@@ -90,6 +94,18 @@ namespace SimController
 
             trackBarRollScale.Value = (int)Math.Round(rollScale * 100);
             rollScaleLabel.Text = rollScale.ToString("F2");
+        }
+        private async void StartRemoteControlServer(object? sender, EventArgs e)
+        {
+            if (_remoteControlServer != null)
+            {
+                _remoteControlServer.Dispose();
+            }
+
+            _remoteControlServer = new TcpTextServer(this);
+            _remoteControlServer.StatusChanged += (_, msg) => OnRemoteControlStatusChanged(msg);
+            _remoteControlServer.MessageReceived += (_, line) => OnRemoteControlMessageReceived(line);
+            await _remoteControlServer.StartAsync(port: 5555);
         }
 
         private void PollTimer_Tick(object? sender, EventArgs e)
@@ -129,6 +145,48 @@ namespace SimController
             telemetryStreamActive = true;
             _telemetryFailsafeTimer.Start();
             telemetryStatusLabel.Text = "Telemetry active.";
+        }
+
+        private void OnRemoteControlStatusChanged(string message)
+        {
+            if (message.StartsWith("Client connected"))
+            {
+                remoteControlConnected = true;
+                remoteControlStatusLabel.Text = "Remote Control: Connected";
+            }
+            else if (message.StartsWith("Client disconnected") || message.StartsWith("Disconnected") || message.StartsWith("Server stopped"))
+            {
+                remoteControlConnected = false;
+                remoteControlStatusLabel.Text = "";
+            }
+        }
+
+        private async void OnRemoteControlMessageReceived(string message)
+        {
+            if (!message.StartsWith("KEEPALIVE"))
+            {
+                labelLastRemoteCommand.Text = "Last CMD: " + message;
+            }
+
+            if (_remoteControlServer == null || !_remoteControlServer.IsConnected)
+            {
+                return;
+            }
+
+            // TODO: Send the current simulator state back to the remote control client.
+            string simStateJson = "{" +
+                $"\"portConnected\": {simulatorState?.portConnected.ToString().ToLower() ?? "false"}," +
+                $"\"motorsEnabled\": {simulatorState?.motorsEnabled.ToString().ToLower() ?? "false"}," +
+                $"\"motorsHomed\": {simulatorState?.motorsHomed.ToString().ToLower() ?? "false"}," +
+                $"\"homingInProgress\": {simulatorState?.homingInProgress.ToString().ToLower() ?? "false"}" + 
+                "}";
+
+            try
+            {
+                await _remoteControlServer.SendAsync(simStateJson);
+            } catch (Exception ex)
+            {
+            }            
         }
 
         private void OnSimStatusChanged(string message)
@@ -187,7 +245,7 @@ namespace SimController
                 homingStatusLabel.Text = "Not Homed";
             }
 
-            if (simulatorState.portConnected)
+            if (simulatorState.portConnected && !remoteControlConnected)
             {
                 simEnableDisableButton.Enabled = true;
             }
@@ -196,7 +254,7 @@ namespace SimController
                 simEnableDisableButton.Enabled = false;
             }
 
-            if (simulatorState.motorsEnabled)
+            if (simulatorState.motorsEnabled && !!remoteControlConnected)
             {
                 simEnableDisableButton.Text = "Disable";
             }
@@ -205,7 +263,7 @@ namespace SimController
                 simEnableDisableButton.Text = "Enable";
             }
 
-            if (simulatorState.motorsEnabled &&
+            if (simulatorState.motorsEnabled && !!remoteControlConnected &&
                 (!simulatorState.homingInProgress && !simulatorState.movingToZero && !telemetryMotionEnabled))
             {
                 simStartStopHomingButton.Enabled = true;
@@ -219,7 +277,7 @@ namespace SimController
                 testMoveButton.Enabled = false;
             }
 
-            if (telemetryStreamActive && simulatorState.motorsEnabled &&
+            if (telemetryStreamActive && simulatorState.motorsEnabled && !remoteControlConnected &&
                 (!simulatorState.homingInProgress && !simulatorState.movingToZero))
             {
                 enableTelemetryLinkButton.Enabled = true;
@@ -232,7 +290,14 @@ namespace SimController
             if (telemetryMotionEnabled)
             {
                 enableTelemetryLinkButton.Text = "Disable Motion";
-                enableTelemetryLinkButton.Enabled = true;
+
+                if (!remoteControlConnected)
+                {
+                    enableTelemetryLinkButton.Enabled = true;
+                } else
+                {
+                    enableTelemetryLinkButton.Enabled = false;
+                }
             }
             else
             {
