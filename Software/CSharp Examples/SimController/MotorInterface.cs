@@ -370,6 +370,8 @@ namespace SimController
 
             myPort.BrakeControl.BrakeSetting(0, sFndCLIWrapper.cliIBrakeControl._BrakeControls.BRAKE_ALLOW_MOTION);
 
+           // myMgr.Delay(200);
+
             simulatorState.motorsEnabled = true;
             StateReporter.Report(simulatorState);
         }
@@ -382,6 +384,8 @@ namespace SimController
             }
 
             myPort.BrakeControl.BrakeSetting(0, sFndCLIWrapper.cliIBrakeControl._BrakeControls.BRAKE_PREVENT_MOTION);
+
+          //  myMgr.Delay(200);
 
             for (int n = 0; n < myNodes.Length; n++)
             {
@@ -433,7 +437,6 @@ namespace SimController
             if (myNodes != null && myMgr != null)
             {
                 EnableMotors();
-                AssertReadyToMove();
 
                 simulatorState.movingToZero = true;
                 StateReporter.Report(simulatorState);
@@ -484,8 +487,6 @@ namespace SimController
 
         private void StartUnmonitoredMove(SimulatorCommand cmd)
         {
-            AssertReadyToMove();
-
             var tasks = new List<Task>();
 
             if (myNodes != null)

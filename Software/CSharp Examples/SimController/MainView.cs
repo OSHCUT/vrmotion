@@ -125,7 +125,7 @@ namespace SimController
 
         private void RemoteControlFailsafeTimer_Tick(object? sender, EventArgs e)
         {
-            if (_motorInterface != null && simulatorState != null && simulatorState.portConnected && telemetryMotionEnabled)
+            if (remoteControlConnected && _motorInterface != null && simulatorState != null && simulatorState.portConnected && telemetryMotionEnabled)
             {
                 telemetryMotionEnabled = false;
 
@@ -291,8 +291,7 @@ namespace SimController
                 homingStatusLabel.Text = "Not Homed";
             }
 
-            if (simulatorState.motorsEnabled && !!remoteControlConnected &&
-                (!simulatorState.homingInProgress && !simulatorState.movingToZero && !telemetryMotionEnabled))
+            if (!simulatorState.homingInProgress && !simulatorState.movingToZero && !telemetryMotionEnabled)
             {
                 simStartStopHomingButton.Enabled = true;
                 simGoToZeroButton.Enabled = true;
@@ -303,7 +302,7 @@ namespace SimController
                 simGoToZeroButton.Enabled = false;
             }
 
-            if (telemetryStreamActive && simulatorState.motorsEnabled && !remoteControlConnected &&
+            if (telemetryStreamActive && 
                 (!simulatorState.homingInProgress && !simulatorState.movingToZero))
             {
                 enableTelemetryLinkButton.Enabled = true;
@@ -316,14 +315,6 @@ namespace SimController
             if (telemetryMotionEnabled)
             {
                 enableTelemetryLinkButton.Text = "Disable Motion";
-
-                if (!remoteControlConnected)
-                {
-                    enableTelemetryLinkButton.Enabled = true;
-                } else
-                {
-                    enableTelemetryLinkButton.Enabled = false;
-                }
             }
             else
             {
@@ -567,7 +558,7 @@ namespace SimController
             pitchRateCmdLabel.Text = (commandedPitchRateCountsPerSecond / 32000 * 60).ToString("F1");
             rollRateCmdLabel.Text = (commandedRollRateCountsPerSecond / 32000 * 60).ToString("F1");
 
-            if (_motorInterface != null && simulatorState != null && simulatorState.portConnected)
+            if (_motorInterface != null && simulatorState != null && simulatorState.portConnected && simulatorState.motorsEnabled)
             {
                 if (telemetryMotionEnabled)
                 {
@@ -644,8 +635,6 @@ namespace SimController
 
         private void StartSimulationMotion()
         {
-            telemetryMotionEnabled = true;
-
             if (_motorInterface != null && simulatorState != null && simulatorState.portConnected)
             {
                 // Make sure rate limits are configured correctly (required, because the homing and "go to zero"
@@ -655,6 +644,8 @@ namespace SimController
 
                 SimulatorCommand cmd2 = new SimulatorCommand { Name = "EnableMotors" };
                 _motorInterface.EnqueueCommand(cmd2);
+
+                telemetryMotionEnabled = true;
             }
 
             UpdateButtonStates();
@@ -675,8 +666,8 @@ namespace SimController
 
                 _motorInterface.EnqueueCommand(cmd);
 
-                SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
-                _motorInterface.EnqueueCommand(cmd2);
+           //     SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
+           //     _motorInterface.EnqueueCommand(cmd2);
             }
 
             UpdateButtonStates();

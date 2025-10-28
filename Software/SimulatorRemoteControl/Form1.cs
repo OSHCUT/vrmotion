@@ -19,7 +19,7 @@ namespace SimulatorRemoteControl
         public SimulatorRemote()
         {
             InitializeComponent();
-            UpdatUiState();
+            UpdateUiState();
 
             _keepaliveTimer = new System.Windows.Forms.Timer();
             _keepaliveTimer.Interval = 200; // milliseconds => 5 Hz
@@ -90,7 +90,7 @@ namespace SimulatorRemoteControl
                 _isConnected = false;
             }
 
-            UpdatUiState();
+            UpdateUiState();
         }
 
         private void MessageReceived(string line)
@@ -114,7 +114,7 @@ namespace SimulatorRemoteControl
                 _isTelemetryStreamActive = false;
             }
 
-            if (line.IndexOf("isTelemetryMotionEnabled\": true") >= 0)
+            if (line.IndexOf("telemetryMotionEnabled\": true") >= 0)
             {
                 _isTelemetryMotionEnabled = true;
             }
@@ -150,10 +150,10 @@ namespace SimulatorRemoteControl
                 _isMovingToZero = false;
             }
 
-            UpdatUiState();
+            UpdateUiState();
         }
 
-        private void UpdatUiState()
+        private void UpdateUiState()
         {
             if (_client == null || !_client.IsConnected)
             {
@@ -168,8 +168,16 @@ namespace SimulatorRemoteControl
             }
 
             // Start/stop button enabled if the machine is ready to move, it is homed, and telemetry stream is active
-            if (!_isTelemetryMotionEnabled)
+            if (_isTelemetryMotionEnabled)
             {
+                buttonStartStop.Enabled = true;
+                buttonStartStop.Text = "Stop";
+            }
+            // If telemetry motion is enabled, we can always stop
+            else
+            {
+                buttonStartStop.Text = "Start";
+
                 if (_isReadyToMove && _isTelemetryStreamActive && _isHomed)
                 {
                     buttonStartStop.Enabled = true;
@@ -178,19 +186,6 @@ namespace SimulatorRemoteControl
                 {
                     buttonStartStop.Enabled = false;
                 }
-            }
-            // If telemetry motion is enabled, we can always stop
-            else
-            {
-                buttonStartStop.Enabled = true;
-            }
-
-            if (_isTelemetryMotionEnabled)
-            {
-                buttonStartStop.Text = "Stop";
-            } else
-            {
-                buttonStartStop.Text = "Start";
             }
 
             // Go home button
@@ -244,7 +239,7 @@ namespace SimulatorRemoteControl
             if (_client == null || !_client.IsConnected)
                 return;
 
-            if (!_isTelemetryMotionEnabled)
+            if (_isTelemetryMotionEnabled)
             {
                 try
                 {
@@ -269,6 +264,8 @@ namespace SimulatorRemoteControl
                     DisconnectClient();
                 }
             }
+
+            UpdateUiState();
         }
 
         private async void buttonGoHome_Click(object sender, EventArgs e)
