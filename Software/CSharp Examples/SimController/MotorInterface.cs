@@ -455,8 +455,19 @@ namespace SimController
 
                         myNodes[n].Motion.PosnMeasured.Refresh();      // Refresh our current measured position
                         int currentPosition = (int)Math.Round(myNodes[n].Motion.PosnMeasured.Value());
-                        myNodes[n].Motion.MovePosnStart(0, true, false);
-                        double timeout = myMgr.TimeStampMsec() + myNodes[n].Motion.MovePosnDurationMsec(Math.Abs(currentPosition), false) + 1000;
+                        int targetPosition = 0;
+
+                        if (n != yawNodeIndex)
+                        {
+                            myNodes[n].Motion.MovePosnStart(targetPosition, true, false);
+                        }
+                        else
+                        {
+                            targetPosition = (int)Math.Round((double)currentPosition / CountsPerRevolution, MidpointRounding.AwayFromZero) * CountsPerRevolution;
+                            myNodes[n].Motion.MovePosnStart(targetPosition, true, false);
+                        }
+
+                        double timeout = myMgr.TimeStampMsec() + myNodes[n].Motion.MovePosnDurationMsec(Math.Abs(targetPosition - currentPosition), false) + 1000;
                         timeouts.Add(timeout);
                     }
                 }

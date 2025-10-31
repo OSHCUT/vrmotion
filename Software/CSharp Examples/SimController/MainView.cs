@@ -658,6 +658,7 @@ namespace SimController
             if (_motorInterface != null && simulatorState != null && simulatorState.portConnected)
             {
                 // Stop any current motion
+                /*
                 SimulatorCommand cmd = new SimulatorCommand { Name = "StartUnmonitoredMove" };
                 cmd.Data.yawRateCountsPerSecond = 0;
                 cmd.Data.pitchRateCountsPerSecond = 0;
@@ -665,9 +666,9 @@ namespace SimController
                 cmd.Data.isVelocityCommand = true;
 
                 _motorInterface.EnqueueCommand(cmd);
-
-           //     SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
-           //     _motorInterface.EnqueueCommand(cmd2);
+                */
+                SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
+                _motorInterface.EnqueueCommand(cmd2);
             }
 
             UpdateButtonStates();
