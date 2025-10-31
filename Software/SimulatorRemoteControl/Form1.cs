@@ -16,6 +16,7 @@ namespace SimulatorRemoteControl
         private bool _isHomed = false;
         private bool _isMovingToZero = false;
 
+        private string _remoteIP = "127.0.0.1";
         public SimulatorRemote()
         {
             InitializeComponent();
@@ -39,7 +40,7 @@ namespace SimulatorRemoteControl
                 {
                     remoteConnectionStatusLabel.Text = "ERROR: Failed to send keepalive. Disconnecting.";
                     DisconnectClient();
-                }                
+                }
             }
         }
 
@@ -69,9 +70,10 @@ namespace SimulatorRemoteControl
 
                 try
                 {
-                    await _client.ConnectAsync("127.0.0.1", 5555);
+                    await _client.ConnectAsync(_remoteIP, 5555);
                     remoteConnectionStatusLabel.Text = "Connected.";
-                } catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     remoteConnectionStatusLabel.Text = "Failed to connect. Try again.";
                     return;
@@ -100,7 +102,8 @@ namespace SimulatorRemoteControl
             if (line.IndexOf("readyToMove\": true") >= 0)
             {
                 _isReadyToMove = true;
-            } else
+            }
+            else
             {
                 _isReadyToMove = false;
             }
@@ -201,7 +204,8 @@ namespace SimulatorRemoteControl
             if (_isMovingToZero)
             {
                 buttonGoHome.Text = "Moving Home...";
-            } else
+            }
+            else
             {
                 buttonGoHome.Text = "Go Home";
             }
@@ -222,16 +226,17 @@ namespace SimulatorRemoteControl
             // TODO: Check existing state and make sure we can do this
             if (_client == null || !_client.IsConnected)
                 return;
-            
+
             try
             {
                 await _client.SendAsync("ZERO_AXES");
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 remoteConnectionStatusLabel.Text = "ERROR: Failed to send zero axes command. Disconnecting.";
                 DisconnectClient();
             }
-            
+
         }
 
         private async void buttonStartStop_Click(object sender, EventArgs e)
@@ -250,7 +255,7 @@ namespace SimulatorRemoteControl
                     remoteConnectionStatusLabel.Text = "ERROR: Failed to send stop command. Disconnecting.";
                     DisconnectClient();
                 }
-                
+
             }
             else
             {
@@ -282,6 +287,11 @@ namespace SimulatorRemoteControl
                 remoteConnectionStatusLabel.Text = "ERROR: Failed to send go home command. Disconnecting.";
                 DisconnectClient();
             }
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            _remoteIP = textBox1.Text;
         }
     }
 }

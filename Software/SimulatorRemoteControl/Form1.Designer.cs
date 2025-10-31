@@ -34,11 +34,12 @@
             buttonGoHome = new Button();
             buttonStartStop = new Button();
             labelLastData = new Label();
+            textBox1 = new TextBox();
             SuspendLayout();
             // 
             // buttonConnect
             // 
-            buttonConnect.Location = new Point(29, 12);
+            buttonConnect.Location = new Point(164, 14);
             buttonConnect.Name = "buttonConnect";
             buttonConnect.Size = new Size(94, 29);
             buttonConnect.TabIndex = 0;
@@ -49,7 +50,7 @@
             // remoteConnectionStatusLabel
             // 
             remoteConnectionStatusLabel.AutoSize = true;
-            remoteConnectionStatusLabel.Location = new Point(129, 16);
+            remoteConnectionStatusLabel.Location = new Point(264, 18);
             remoteConnectionStatusLabel.Name = "remoteConnectionStatusLabel";
             remoteConnectionStatusLabel.Size = new Size(109, 20);
             remoteConnectionStatusLabel.TabIndex = 1;
@@ -96,11 +97,21 @@
             labelLastData.TabIndex = 5;
             labelLastData.Text = "Last Data: ";
             // 
+            // textBox1
+            // 
+            textBox1.Location = new Point(29, 14);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(129, 27);
+            textBox1.TabIndex = 6;
+            textBox1.Text = "127.0.0.1";
+            textBox1.TextChanged += textBox1_TextChanged;
+            // 
             // SimulatorRemote
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 480);
+            Controls.Add(textBox1);
             Controls.Add(labelLastData);
             Controls.Add(buttonStartStop);
             Controls.Add(buttonGoHome);
@@ -121,5 +132,6 @@
         private Button buttonGoHome;
         private Button buttonStartStop;
         private Label labelLastData;
+        private TextBox textBox1;
     }
 }
