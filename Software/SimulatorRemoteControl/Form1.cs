@@ -1,4 +1,6 @@
-using System.Threading.Tasks;
+using System;
+using System.IO;
+using System.Net;
 using TcpText;
 
 namespace SimulatorRemoteControl
@@ -6,6 +8,7 @@ namespace SimulatorRemoteControl
     public partial class SimulatorRemote : Form
     {
         private System.Windows.Forms.Timer _keepaliveTimer;
+        private readonly string _filePath = Path.Combine(Application.StartupPath, "ip_address.txt");
 
         private TcpTextClient? _client;
         private bool _isConnected = false;
@@ -21,6 +24,12 @@ namespace SimulatorRemoteControl
         {
             InitializeComponent();
             UpdateUiState();
+
+            if (File.Exists(_filePath))
+            {
+                _remoteIP = File.ReadAllText(_filePath).Trim();
+                textBox1.Text = _remoteIP;
+            }
 
             _keepaliveTimer = new System.Windows.Forms.Timer();
             _keepaliveTimer.Interval = 200; // milliseconds => 5 Hz
@@ -70,6 +79,15 @@ namespace SimulatorRemoteControl
 
                 try
                 {
+                    File.WriteAllText(_filePath, _remoteIP);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to save IP address: {ex.Message}");
+                }
+
+                try
+                {
                     await _client.ConnectAsync(_remoteIP, 5555);
                     remoteConnectionStatusLabel.Text = "Connected.";
                 }
@@ -79,6 +97,8 @@ namespace SimulatorRemoteControl
                     return;
                 }
             }
+
+            UpdateUiState();
         }
 
         private void ConnectionStatusChanged(string status)
@@ -168,6 +188,10 @@ namespace SimulatorRemoteControl
                 remoteConnectionStatusLabel.Text = "Not connected";
 
                 return;
+            }
+            else if (_client.IsConnected)
+            {
+                buttonConnect.Text = "Disconnect";
             }
 
             // Start/stop button enabled if the machine is ready to move, it is homed, and telemetry stream is active
