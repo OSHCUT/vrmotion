@@ -448,31 +448,28 @@ namespace SimController
                 List<double> timeouts = new List<double>(3);
                 for (int n = 0; n < myNodes.Length; n++)
                 {
+                    myNodes[n].Motion.MoveWentDone();
+                    myNodes[n].AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
+                    myNodes[n].VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
+                    myNodes[n].Motion.AccLimit.Value(1000);      // Set Acceleration Limit (RPM/Sec)
+                    myNodes[n].Motion.VelLimit.Value(200);              // Set Velocity Limit (RPM)
+
+                    myNodes[n].Motion.PosnMeasured.Refresh();      // Refresh our current measured position
+                    int currentPosition = (int)Math.Round(myNodes[n].Motion.PosnMeasured.Value());
+                    int targetPosition = 0;
+
                     if (n != yawNodeIndex)
                     {
-                        myNodes[n].Motion.MoveWentDone();
-                        myNodes[n].AccUnit(cliINode._accUnits.RPM_PER_SEC);         // Set the units for Acceleration to RPM/SEC
-                        myNodes[n].VelUnit(cliINode._velUnits.RPM);                 // Set the units for Velocity to RPM
-                        myNodes[n].Motion.AccLimit.Value(1000);      // Set Acceleration Limit (RPM/Sec)
-                        myNodes[n].Motion.VelLimit.Value(200);              // Set Velocity Limit (RPM)
-
-                        myNodes[n].Motion.PosnMeasured.Refresh();      // Refresh our current measured position
-                        int currentPosition = (int)Math.Round(myNodes[n].Motion.PosnMeasured.Value());
-                        int targetPosition = 0;
-
-                        if (n != yawNodeIndex)
-                        {
-                            myNodes[n].Motion.MovePosnStart(targetPosition, true, false);
-                        }
-                        else
-                        {
-                            targetPosition = (int)Math.Round((double)currentPosition / CountsPerRevolution, MidpointRounding.AwayFromZero) * CountsPerRevolution;
-                            myNodes[n].Motion.MovePosnStart(targetPosition, true, false);
-                        }
-
-                        double timeout = myMgr.TimeStampMsec() + myNodes[n].Motion.MovePosnDurationMsec(Math.Abs(targetPosition - currentPosition), false) + 1000;
-                        timeouts.Add(timeout);
+                        myNodes[n].Motion.MovePosnStart(targetPosition, true, false);
                     }
+                    else
+                    {
+                        targetPosition = (int)Math.Round((double)currentPosition / CountsPerRevolution, MidpointRounding.AwayFromZero) * CountsPerRevolution;
+                        myNodes[n].Motion.MovePosnStart(targetPosition, true, false);
+                    }
+
+                    double timeout = myMgr.TimeStampMsec() + myNodes[n].Motion.MovePosnDurationMsec(Math.Abs(targetPosition - currentPosition), false) + 1000;
+                    timeouts.Add(timeout);
                 }
 
                 // Poll until all moves are complete
