@@ -95,7 +95,7 @@ namespace SimController
                     myMgr.PortsOpen(1);
                     myPort = myMgr.Ports(0);
 
-                    myPort.BrakeControl.BrakeSetting(0, sFndCLIWrapper.cliIBrakeControl._BrakeControls.BRAKE_PREVENT_MOTION);
+//                    myPort.BrakeControl.BrakeSetting(0, sFndCLIWrapper.cliIBrakeControl._BrakeControls.BRAKE_PREVENT_MOTION);
 
                     if (myPort.NodeCount() != 3)
                     {
@@ -116,11 +116,14 @@ namespace SimController
                     simulatorState.portConnected = true;
                     StateReporter.Report(simulatorState);
 
+                    EnableMotors();
+                    myMgr.Delay(500);
+
                     ProcessCommands();
                 }
                 catch (Exception e)
                 {
-                    StatusReporter.Report("Failed to open simulator COM port. " + e.Message);
+                    StatusReporter.Report(e.Message);
                     return;
                 }
             });
@@ -287,8 +290,8 @@ namespace SimController
             {
                 Console.WriteLine("Port {0}: state={1}, nodes={2}", myPort.NetNumber(), myPort.OpenState(), myPort.NodeCount());
 
-                EnableMotors();
-                myMgr.Delay(200);
+//                EnableMotors();
+//                myMgr.Delay(200);
 
                 simulatorState.motorsHomed = false;
                 simulatorState.homingInProgress = true;
@@ -349,7 +352,7 @@ namespace SimController
                     }
                 }
 
-                DisableMotors();
+//                DisableMotors();
                 simulatorState.motorsHomed = true;
                 simulatorState.homingInProgress = false;
                 StateReporter.Report(simulatorState);
@@ -368,7 +371,7 @@ namespace SimController
                 myNodes[n].EnableReq(true);
             }
 
-            myPort.BrakeControl.BrakeSetting(0, sFndCLIWrapper.cliIBrakeControl._BrakeControls.BRAKE_ALLOW_MOTION);
+//            myPort.BrakeControl.BrakeSetting(0, sFndCLIWrapper.cliIBrakeControl._BrakeControls.BRAKE_ALLOW_MOTION);
 
            // myMgr.Delay(200);
 
@@ -383,7 +386,7 @@ namespace SimController
                 throw new Exception("Call Start() before attempting to enable motors.");
             }
 
-            myPort.BrakeControl.BrakeSetting(0, sFndCLIWrapper.cliIBrakeControl._BrakeControls.BRAKE_PREVENT_MOTION);
+//            myPort.BrakeControl.BrakeSetting(0, sFndCLIWrapper.cliIBrakeControl._BrakeControls.BRAKE_PREVENT_MOTION);
 
           //  myMgr.Delay(200);
 
@@ -436,7 +439,7 @@ namespace SimController
         {
             if (myNodes != null && myMgr != null)
             {
-                EnableMotors();
+//                EnableMotors();
 
                 simulatorState.movingToZero = true;
                 StateReporter.Report(simulatorState);
@@ -489,7 +492,7 @@ namespace SimController
                     }
                 }
 
-                DisableMotors();
+//DisableMotors();
 
                 simulatorState.movingToZero = false;
                 StateReporter.Report(simulatorState);

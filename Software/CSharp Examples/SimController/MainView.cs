@@ -83,14 +83,9 @@ namespace SimController
             _pollTimer.Start();
 
             _telemetryFailsafeTimer = new System.Windows.Forms.Timer();
-            _telemetryFailsafeTimer.Interval = 100;
+            _telemetryFailsafeTimer.Interval = 500;
             _telemetryFailsafeTimer.Tick += TelemetryFailsafeTimer_Tick;
             _telemetryFailsafeTimer.Start();
-
-            _remoteControlFailsafeTimer = new System.Windows.Forms.Timer();
-            _remoteControlFailsafeTimer.Interval = 500;
-            _remoteControlFailsafeTimer.Tick += RemoteControlFailsafeTimer_Tick;
-            _remoteControlFailsafeTimer.Start();
 
             trackBarYawScale.Value = (int)Math.Round(yawScale * 100);
             yawScaleLabel.Text = yawScale.ToString("F2");
@@ -188,8 +183,8 @@ namespace SimController
 
         private async void OnRemoteControlMessageReceived(string message)
         {
-            _remoteControlFailsafeTimer.Stop();
-            _remoteControlFailsafeTimer.Start();
+ //           _remoteControlFailsafeTimer.Stop();
+ //           _remoteControlFailsafeTimer.Start();
 
             if (!message.StartsWith("KEEPALIVE"))
             {
@@ -666,9 +661,10 @@ namespace SimController
                 cmd.Data.isVelocityCommand = true;
 
                 _motorInterface.EnqueueCommand(cmd);
-                */
+                
                 SimulatorCommand cmd2 = new SimulatorCommand { Name = "DisableMotors" };
                 _motorInterface.EnqueueCommand(cmd2);
+                */
             }
 
             UpdateButtonStates();
