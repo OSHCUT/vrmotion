@@ -59,6 +59,8 @@ namespace SimController
 
         public const int CountsPerRevolution = 32000;
 
+        private const int yawCountsPerOutputRotation = (int)((double)CountsPerRevolution * (19.099 / 2.228) * 15);
+
         public MotorInterface() {
             StatusReporter = new Progress<string>(msg => StatusChanged?.Invoke(msg));
             StateReporter = new Progress<SimulatorState>(state => StateChanged?.Invoke(state));
@@ -464,7 +466,8 @@ namespace SimController
                     }
                     else
                     {
-                        targetPosition = (int)Math.Round((double)currentPosition / CountsPerRevolution, MidpointRounding.AwayFromZero) * CountsPerRevolution;
+                        targetPosition = (int)Math.Round((double)currentPosition / (double)yawCountsPerOutputRotation, MidpointRounding.AwayFromZero) * (int)yawCountsPerOutputRotation;
+                        Console.WriteLine(targetPosition.ToString());
                         myNodes[n].Motion.MovePosnStart(targetPosition, true, false);
                     }
 
