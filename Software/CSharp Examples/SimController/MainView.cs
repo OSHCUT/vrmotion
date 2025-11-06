@@ -244,7 +244,7 @@ namespace SimController
             UpdateButtonStates();
 
             // Update motor state values
-            simYawLabel.Text = simulatorState.yawRate.ToString("F1");
+            simYawLabel.Text = simulatorState.yawCounts.ToString("F1");
             simPitchLabel.Text = simulatorState.pitchCounts.ToString("F1");
             simRollLabel.Text = simulatorState.rollCounts.ToString("F1");
         }
